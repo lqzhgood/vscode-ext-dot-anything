@@ -1,15 +1,38 @@
 {
     "name": "dot-anything",
     "displayName": "Dot Anything",
-    "description": "Press the dot key and get anything.",
+    "description": "Press the dot key to transform into anything.",
+    "publisher": "lqzh",
+    "author": {
+        "name": "lqzh"
+    },
     "version": "0.0.1",
+    "icon": "public/logo.png",
+    "galleryBanner": {
+        "color": "#C80000",
+        "theme": "dark"
+    },
     "engines": {
         "vscode": "^1.103.0"
     },
     "categories": [
-        "Other"
+        "Snippets",
+        "Formatters"
     ],
-    "activationEvents": [],
+    "keywords": [
+        "Snippets",
+        "Formatters",
+        "convert",
+        "transform",
+        "template"
+    ],
+    "pricing": "Free",
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "sponsor": {
+        "url": "https://github.com/sponsors/lqzhgood"
+    },
     "main": "./dist/extension.js",
     "contributes": {
         "commands": [
@@ -54,5 +77,15 @@
         "typescript": "^5.9.2",
         "@vscode/test-cli": "^0.0.11",
         "@vscode/test-electron": "^2.5.2"
-    }
+    },
+    "license": "SEE LICENSE IN LICENSE.txt",
+    "bugs": {
+        "url": "https://github.com/lqzhgood/vscode-ext-dot-anything/issues",
+        "email": "sean@contoso.com"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/lqzhgood/vscode-ext-dot-anything.git"
+    },
+    "homepage": "https://github.com/lqzhgood/vscode-ext-dot-anything/blob/main/README.md"
 }
