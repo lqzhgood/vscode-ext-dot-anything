@@ -1,31 +1,114 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import { dirname } from 'path';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
-    // console.log(
-    //     'Congratulations, your extension "dot-anything" is now active!'
-    // );
-    // console.log('vscode', vscode);
-    // console.log('vscode', vscode);
+    const Config: vscode.WorkspaceConfiguration =
+        vscode.workspace.getConfiguration('dotIt');
 
-    // // The command has been defined in the package.json file
-    // // Now provide the implementation of the command with registerCommand
-    // // The commandId parameter must match the command field in package.json
-    // const disposable = vscode.commands.registerCommand(
-    //     'dot-anything.helloWorld',
-    //     () => {
-    //         console.log('123123123', 123123123);
-    //         // The code you place here will be executed every time your command is executed
-    //         // Display a message box to the user
-    //         vscode.window.showInformationMessage('Hello World from Dot 111!');
-    //     }
-    // );
-    // context.subscriptions.push(disposable);
+    const { rules } = Config;
+
+    console.log('11111 Config', Config, rules);
+
+    const provider2 = vscode.languages.registerCompletionItemProvider(
+        ['plaintext', 'javascript'],
+        {
+            provideCompletionItems(
+                document: vscode.TextDocument,
+                position: vscode.Position
+            ) {
+                const fileName = document.fileName;
+                const workDir = dirname(fileName);
+                const word = document.getText(
+                    document.getWordRangeAtPosition(position)
+                );
+                const line = document.lineAt(position);
+                // const projectPath = util.getProjectPath(document);
+
+                console.log(document, workDir, word, line);
+
+                const linePrefix = document
+                    .lineAt(position)
+                    .text.slice(0, position.character);
+
+                console.log('111111 linePrefix', word, position, linePrefix);
+                if (!linePrefix.endsWith('xxx.')) {
+                    return undefined;
+                }
+                // 创建补全项
+                const completionItem = new vscode.CompletionItem(
+                    'xyz',
+                    vscode.CompletionItemKind.Function
+                );
+                // completionItem.label = 'asdfasdf';
+                // completionItem.insertText = '12345'; // 最终插入的文本
+                completionItem.detail =
+                    '(method) tyc_test.testA( key: string, value: any)';
+                completionItem.documentation = new vscode.MarkdownString(
+                    '选择此项将会把之前的 `abc.` 替换为 `12345`'
+                ); // 更详细的文档说明
+                console.log(
+                    1111111111111111111,
+                    document.getWordRangeAtPosition(position)?.start
+                );
+                // completionItem.range = new vscode.Range(position, position);
+                // document.getWordRangeAtPosition(position)?.start,
+                // document.getWordRangeAtPosition(position)?.end
+
+                // completionItem.range = new vscode.Range(
+                //     new vscode.Position(position.line, position.character - 4), // -4 是因为 "xxx." 有 4 个字符
+                //     position
+                // );
+                completionItem.command = {
+                    command: 'editor.action.triggerSuggest',
+                    title: 'Replace with 12345',
+                    arguments: [
+                        {
+                            range: new vscode.Range(
+                                new vscode.Position(
+                                    position.line,
+                                    position.character - 4
+                                ),
+                                position
+                            ),
+                            text: '12345',
+                        },
+                    ],
+                };
+
+                return [completionItem];
+
+                // return [
+                //     new vscode.CompletionItem(
+                //         'aaa',
+                //         vscode.CompletionItemKind.Method
+                //     ),
+                //     new vscode.CompletionItem(
+                //         'warn',
+                //         vscode.CompletionItemKind.Method
+                //     ),
+                //     new vscode.CompletionItem(
+                //         'error',
+                //         vscode.CompletionItemKind.Method
+                //     ),
+                // ];
+            },
+            // resolveCompletionItem(item) {
+            //     console.log(123123123, item);
+
+            //     const start = new vscode.Position(0, 0);
+            //     const end = new vscode.Position(0, 4); // 结束位置是当前光标位置（即点号之后）
+            //     item.range = new vscode.Range(start, end);
+
+            //     item.insertText = 'plmasdfklj';
+            //     return item;
+            // },
+        },
+        '.'
+    );
 
     const provider1 = vscode.languages.registerCompletionItemProvider(
         'plaintext',
@@ -87,41 +170,6 @@ export function activate(context: vscode.ExtensionContext) {
                 ];
             },
         }
-    );
-
-    const provider2 = vscode.languages.registerCompletionItemProvider(
-        'plaintext',
-        {
-            provideCompletionItems(
-                document: vscode.TextDocument,
-                position: vscode.Position
-            ) {
-                // get all text until the `position` and check if it reads `console.`
-                // and if so then complete if `log`, `warn`, and `error`
-                const linePrefix = document
-                    .lineAt(position)
-                    .text.slice(0, position.character);
-                if (!linePrefix.endsWith('console.')) {
-                    return undefined;
-                }
-
-                return [
-                    new vscode.CompletionItem(
-                        'log',
-                        vscode.CompletionItemKind.Method
-                    ),
-                    new vscode.CompletionItem(
-                        'warn',
-                        vscode.CompletionItemKind.Method
-                    ),
-                    new vscode.CompletionItem(
-                        'error',
-                        vscode.CompletionItemKind.Method
-                    ),
-                ];
-            },
-        },
-        '.' // triggered whenever a '.' is being typed
     );
 
     context.subscriptions.push(provider1, provider2);

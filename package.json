@@ -34,23 +34,6 @@
         "url": "https://github.com/sponsors/lqzhgood"
     },
     "main": "./dist/extension.js",
-    "contributes": {
-        "commands": [
-            {
-                "command": "dot-anything.helloWorld",
-                "title": "Hello World"
-            }
-        ],
-        "menus": {
-            "editor/context": [
-                {
-                    "when": "editorFocus",
-                    "command": "workbench.action.reloadWindow",
-                    "group": "navigation"
-                }
-            ]
-        }
-    },
     "scripts": {
         "vscode:prepublish": "npm run package",
         "compile": "npm run check-types && npm run lint && node esbuild.js",
@@ -87,5 +70,160 @@
         "type": "git",
         "url": "https://github.com/lqzhgood/vscode-ext-dot-anything.git"
     },
-    "homepage": "https://github.com/lqzhgood/vscode-ext-dot-anything/blob/main/README.md"
+    "homepage": "https://github.com/lqzhgood/vscode-ext-dot-anything/blob/main/README.md",
+    "contributes": {
+        "commands": [
+            {
+                "command": "dot-anything.helloWorld",
+                "title": "Hello World"
+            }
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "when": "editorFocus",
+                    "command": "workbench.action.reloadWindow",
+                    "group": "navigation"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "DotIt",
+            "properties": {
+                "dotIt.rules": {
+                    "type": "array",
+                    "description": "Customize dot it rules",
+                    "default": [
+                        {
+                            "label": "log",
+                            "description": "quick console.log result",
+                            "format": "console.log"
+                        },
+                        {
+                            "label": "clg",
+                            "description": "quick console.log result",
+                            "format": "console.log"
+                        },
+                        {
+                            "label": "cwa",
+                            "description": "quick console.warn result",
+                            "format": "console.warn"
+                        },
+                        {
+                            "label": "cer",
+                            "description": "quick console.err result",
+                            "format": "console.error"
+                        }
+                    ],
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "fileType": {
+                                "type": "array",
+                                "items": {
+                                    "anyOf": [
+                                        {
+                                            "type": "string",
+                                            "enum": [
+                                                "*",
+                                                "abap",
+                                                "bat",
+                                                "bibtex",
+                                                "clojure",
+                                                "coffeescript",
+                                                "c",
+                                                "cpp",
+                                                "csharp",
+                                                "dockercompose",
+                                                "css",
+                                                "cuda-cpp",
+                                                "d",
+                                                "dart",
+                                                "pascal",
+                                                "diff",
+                                                "dockerfile",
+                                                "erlang",
+                                                "fsharp",
+                                                "git-commit",
+                                                "git-rebase",
+                                                "go",
+                                                "groovy",
+                                                "handlebars",
+                                                "haml",
+                                                "haskell",
+                                                "html",
+                                                "ini",
+                                                "java",
+                                                "javascript",
+                                                "javascriptreact",
+                                                "json",
+                                                "jsonc",
+                                                "julia",
+                                                "latex",
+                                                "less",
+                                                "lua",
+                                                "makefile",
+                                                "markdown",
+                                                "objective-c",
+                                                "objective-cpp",
+                                                "ocaml",
+                                                "pascal",
+                                                "perl",
+                                                "perl6",
+                                                "php",
+                                                "plaintext",
+                                                "powershell",
+                                                "jade",
+                                                "pug",
+                                                "python",
+                                                "r",
+                                                "razor",
+                                                "ruby",
+                                                "rust",
+                                                "scss",
+                                                "sass",
+                                                "shaderlab",
+                                                "shellscript",
+                                                "slim",
+                                                "sql",
+                                                "stylus",
+                                                "svelte",
+                                                "swift",
+                                                "typescript",
+                                                "typescriptreact",
+                                                "tex",
+                                                "vb",
+                                                "vue",
+                                                "vue-html",
+                                                "xml",
+                                                "xsl",
+                                                "yaml"
+                                            ],
+                                            "default": "*"
+                                        }
+                                    ]
+                                },
+                                "description": "support language identifiers, see https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers"
+                            },
+                            "label": {
+                                "type": "string",
+                                "required": true,
+                                "description": "trigger keyword"
+                            },
+                            "description": {
+                                "type": "string",
+                                "required": true,
+                                "description": "description, support Markdown"
+                            },
+                            "format": {
+                                "type": "string",
+                                "required": true,
+                                "description": "format function"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
