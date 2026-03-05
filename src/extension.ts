@@ -1,179 +1,132 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { dirname } from 'path';
+import { EnvVars } from './types';
+import path from 'path';
+import { getSingleChannel, LOG } from './utils';
+import { applyFormat, getRules, isRuleApplicable } from './lib';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+// debug
 export function activate(context: vscode.ExtensionContext) {
-    const Config: vscode.WorkspaceConfiguration =
-        vscode.workspace.getConfiguration('dotIt');
+    const out = getSingleChannel();
+    LOG('[activate] extension activated');
+    LOG('[activate] rules: ' + JSON.stringify(getRules()));
 
-    const { rules } = Config;
+    // 监听配置变化，重新注册 provider
+    let disposable = registerProvider(out);
+    context.subscriptions.push(disposable);
 
-    console.log('11111 Config', Config, rules);
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration('dotIt.rules')) {
+                disposable.dispose();
+                disposable = registerProvider(out);
+                context.subscriptions.push(disposable);
+            }
+        }),
+    );
+}
 
-    const provider2 = vscode.languages.registerCompletionItemProvider(
-        ['plaintext', 'javascript'],
+function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
+    return vscode.languages.registerCompletionItemProvider(
+        // 注册到所有文件类型，内部再按 fileType 过滤
+        '*',
         {
             provideCompletionItems(
                 document: vscode.TextDocument,
-                position: vscode.Position
-            ) {
-                const fileName = document.fileName;
-                const workDir = dirname(fileName);
-                const word = document.getText(
-                    document.getWordRangeAtPosition(position)
-                );
-                const line = document.lineAt(position);
-                // const projectPath = util.getProjectPath(document);
+                position: vscode.Position,
+            ): vscode.CompletionItem[] | undefined {
+                const lineText = document.lineAt(position).text;
+                const textBeforeCursor = lineText.slice(0, position.character);
 
-                console.log(document, workDir, word, line);
+                LOG('triggered, textBeforeCursor: ', textBeforeCursor);
 
-                const linePrefix = document
-                    .lineAt(position)
-                    .text.slice(0, position.character);
-
-                console.log('111111 linePrefix', word, position, linePrefix);
-                if (!linePrefix.endsWith('xxx.')) {
+                // 匹配 `.` 前的输入词，如 `abc.` 中的 `abc`
+                const match = textBeforeCursor.match(/(\S+)\.$/);
+                if (!match) {
+                    LOG('no match, skipping');
                     return undefined;
                 }
-                // 创建补全项
-                const completionItem = new vscode.CompletionItem(
-                    'xyz',
-                    vscode.CompletionItemKind.Function
-                );
-                // completionItem.label = 'asdfasdf';
-                // completionItem.insertText = '12345'; // 最终插入的文本
-                completionItem.detail =
-                    '(method) tyc_test.testA( key: string, value: any)';
-                completionItem.documentation = new vscode.MarkdownString(
-                    '选择此项将会把之前的 `abc.` 替换为 `12345`'
-                ); // 更详细的文档说明
-                console.log(
-                    1111111111111111111,
-                    document.getWordRangeAtPosition(position)?.start
-                );
-                // completionItem.range = new vscode.Range(position, position);
-                // document.getWordRangeAtPosition(position)?.start,
-                // document.getWordRangeAtPosition(position)?.end
 
-                // completionItem.range = new vscode.Range(
-                //     new vscode.Position(position.line, position.character - 4), // -4 是因为 "xxx." 有 4 个字符
-                //     position
-                // );
-                completionItem.command = {
-                    command: 'editor.action.triggerSuggest',
-                    title: 'Replace with 12345',
-                    arguments: [
-                        {
-                            range: new vscode.Range(
-                                new vscode.Position(
-                                    position.line,
-                                    position.character - 4
-                                ),
-                                position
-                            ),
-                            text: '12345',
-                        },
-                    ],
+                const word = match[1];
+                const languageId = document.languageId;
+                const rules = getRules();
+                LOG(
+                    `input="${word}", languageId="${languageId}", rules=${rules.length}`,
+                );
+
+                // 构建环境变量
+                const workspaceFolders = vscode.workspace.workspaceFolders;
+                const workspaceFolder =
+                    workspaceFolders?.[0]?.uri?.fsPath ?? '';
+
+                const { name, ext, base, dir } = path.parse(document.fileName);
+
+                const envVars: EnvVars = {
+                    _$word: word,
+                    _$filePath: document.fileName,
+                    _$fileName: name,
+                    _$fileBase: base,
+                    _$fileExt: ext,
+                    _$fileDir: dir,
+                    _$languageId: languageId,
+                    _$lineNumber: String(position.line + 1),
+                    _$column: String(position.character + 1),
+                    _$lineText: lineText,
+                    _$workspaceFolder: workspaceFolder,
                 };
 
-                return [completionItem];
+                const items: vscode.CompletionItem[] = [];
 
-                // return [
-                //     new vscode.CompletionItem(
-                //         'aaa',
-                //         vscode.CompletionItemKind.Method
-                //     ),
-                //     new vscode.CompletionItem(
-                //         'warn',
-                //         vscode.CompletionItemKind.Method
-                //     ),
-                //     new vscode.CompletionItem(
-                //         'error',
-                //         vscode.CompletionItemKind.Method
-                //     ),
-                // ];
+                for (const rule of rules) {
+                    if (!isRuleApplicable(rule, languageId)) {
+                        LOG(
+                            `rule "${rule.trigger}" skipped (fileType mismatch)`,
+                        );
+                        continue;
+                    }
+
+                    let result: string;
+                    try {
+                        result = applyFormat(rule, envVars);
+                    } catch (err) {
+                        LOG(`rule "${rule.trigger}" error: ${err}`);
+                        continue;
+                    }
+
+                    LOG(`rule "${rule.trigger}" → "${result}"`);
+
+                    const item = new vscode.CompletionItem(
+                        rule.trigger,
+                        vscode.CompletionItemKind.Function,
+                    );
+                    item.detail = result;
+                    item.documentation = new vscode.MarkdownString(
+                        rule.description ?? '',
+                    );
+
+                    // 替换范围：从 input 起点到光标（含 `input.`）
+                    const startChar = position.character - word.length - 1; // -1 为 `.`
+                    const replaceRange = new vscode.Range(
+                        new vscode.Position(position.line, startChar),
+                        position,
+                    );
+                    item.range = replaceRange;
+                    item.insertText = result;
+                    // filterText 包含 trigger，这样用户输入 trigger 前缀时可以正确过滤
+                    // 例如 abc.up 可以被 "u" 匹配到 "up"
+                    item.filterText = word + '.' + rule.trigger;
+
+                    // 排序：按配置顺序
+                    item.sortText = String(items.length).padStart(6, '0');
+
+                    items.push(item);
+                }
+
+                LOG(`[completion] returning ${items.length} items`);
+                return items.length > 0 ? items : undefined;
             },
-            // resolveCompletionItem(item) {
-            //     console.log(123123123, item);
-
-            //     const start = new vscode.Position(0, 0);
-            //     const end = new vscode.Position(0, 4); // 结束位置是当前光标位置（即点号之后）
-            //     item.range = new vscode.Range(start, end);
-
-            //     item.insertText = 'plmasdfklj';
-            //     return item;
-            // },
         },
-        '.'
+        '.', // 触发字符
     );
-
-    const provider1 = vscode.languages.registerCompletionItemProvider(
-        'plaintext',
-        {
-            provideCompletionItems(
-                _document: vscode.TextDocument,
-                _position: vscode.Position,
-                _token: vscode.CancellationToken,
-                _context: vscode.CompletionContext
-            ) {
-                // a simple completion item which inserts `Hello World!`
-                const simpleCompletion = new vscode.CompletionItem(
-                    'Hello World!'
-                );
-
-                // a completion item that inserts its text as snippet,
-                // the `insertText`-property is a `SnippetString` which will be
-                // honored by the editor.
-                const snippetCompletion = new vscode.CompletionItem(
-                    'Good part of the day'
-                );
-                snippetCompletion.insertText = new vscode.SnippetString(
-                    'Good ${1|morning,afternoon,evening|}. It is ${1}, right?'
-                );
-                const docs = new vscode.MarkdownString(
-                    'Inserts a snippet that lets you select [link](x.ts).'
-                );
-                snippetCompletion.documentation = docs;
-                docs.baseUri = vscode.Uri.parse('http://example.com/a/b/c/');
-
-                // a completion item that can be accepted by a commit character,
-                // the `commitCharacters`-property is set which means that the completion will
-                // be inserted and then the character will be typed.
-                const commitCharacterCompletion = new vscode.CompletionItem(
-                    'console'
-                );
-                commitCharacterCompletion.commitCharacters = ['.'];
-                commitCharacterCompletion.documentation =
-                    new vscode.MarkdownString('Press `.` to get `console.`');
-
-                // a completion item that retriggers IntelliSense when being accepted,
-                // the `command`-property is set which the editor will execute after
-                // completion has been inserted. Also, the `insertText` is set so that
-                // a space is inserted after `new`
-                const commandCompletion = new vscode.CompletionItem('new');
-                commandCompletion.kind = vscode.CompletionItemKind.Keyword;
-                commandCompletion.insertText = 'new ';
-                commandCompletion.command = {
-                    command: 'editor.action.triggerSuggest',
-                    title: 'Re-trigger completions...',
-                };
-
-                // return all completion items as array
-                return [
-                    simpleCompletion,
-                    snippetCompletion,
-                    commitCharacterCompletion,
-                    commandCompletion,
-                ];
-            },
-        }
-    );
-
-    context.subscriptions.push(provider1, provider2);
 }
 
-// This method is called when your extension is deactivated
 export function deactivate() {}
