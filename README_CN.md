@@ -1,5 +1,7 @@
 # Dot Anything
 
+![logo](./public/logo_128.png)
+
 按下 `.` 键，将文本转换为任意格式。
 
 [English](README.md)
@@ -208,3 +210,7 @@ npm test
 
 - 问题反馈：[GitHub Issues](https://github.com/lqzhgood/vscode-ext-dot-anything/issues)
 - 赞助支持：[GitHub Sponsors](https://github.com/sponsors/lqzhgood)
+
+<hr />
+
+![cover](public/cover_800.png)

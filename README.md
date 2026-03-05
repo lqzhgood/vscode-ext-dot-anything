@@ -1,5 +1,7 @@
 # Dot Anything
 
+![logo](./public/logo_128.png)
+
 Press `.` to transform text into anything.
 
 [中文文档](README_CN.md)
@@ -21,13 +23,13 @@ Configure `dotIt.rules` in VS Code settings to define your transformation rules.
 
 ### Rule Properties
 
-| Property      | Type               | Required | Default | Description                            |
-| ------------- | ------------------ | -------- | ------- | -------------------------------------- |
-| `trigger`     | string             | Yes      | -       | Trigger keyword for filtering items    |
-| `description` | string             | Yes      | -       | Rule description, supports Markdown    |
-| `format`      | string \| string[] | Yes      | -       | Format string or function string       |
-| `type`        | string             | No       | `text`  | Rule type: `text` or `function`        |
-| `fileType`    | string[]           | No       | `["*"]` | Applicable language identifiers        |
+| Property      | Type               | Required | Default | Description                         |
+| ------------- | ------------------ | -------- | ------- | ----------------------------------- |
+| `trigger`     | string             | Yes      | -       | Trigger keyword for filtering items |
+| `description` | string             | Yes      | -       | Rule description, supports Markdown |
+| `format`      | string \| string[] | Yes      | -       | Format string or function string    |
+| `type`        | string             | No       | `text`  | Rule type: `text` or `function`     |
+| `fileType`    | string[]           | No       | `["*"]` | Applicable language identifiers     |
 
 ### Rule Types
 
@@ -35,19 +37,19 @@ Configure `dotIt.rules` in VS Code settings to define your transformation rules.
 
 Use placeholders for simple text replacement. Supported placeholders:
 
-| Placeholder         | Description                                    |
-| ------------------- | ---------------------------------------------- |
-| `_$word`            | Input text (the word before `.`)               |
-| `_$filePath`        | Full path of the current file                  |
-| `_$fileName`        | Current file name (without extension)          |
-| `_$fileBase`        | Current file name (with extension)             |
-| `_$fileExt`         | Current file extension                         |
-| `_$fileDir`         | Directory of the current file                  |
-| `_$languageId`      | Current language identifier                    |
-| `_$lineNumber`      | Current line number                            |
-| `_$column`          | Current column number                          |
-| `_$lineText`        | Current line text                              |
-| `_$workspaceFolder` | Workspace folder path                          |
+| Placeholder         | Description                           |
+| ------------------- | ------------------------------------- |
+| `_$word`            | Input text (the word before `.`)      |
+| `_$filePath`        | Full path of the current file         |
+| `_$fileName`        | Current file name (without extension) |
+| `_$fileBase`        | Current file name (with extension)    |
+| `_$fileExt`         | Current file extension                |
+| `_$fileDir`         | Directory of the current file         |
+| `_$languageId`      | Current language identifier           |
+| `_$lineNumber`      | Current line number                   |
+| `_$column`          | Current column number                 |
+| `_$lineText`        | Current line text                     |
+| `_$workspaceFolder` | Workspace folder path                 |
 
 **Examples:**
 
@@ -208,3 +210,7 @@ See [LICENSE.txt](LICENSE.txt) file.
 
 - Report issues: [GitHub Issues](https://github.com/lqzhgood/vscode-ext-dot-anything/issues)
 - Sponsor: [GitHub Sponsors](https://github.com/sponsors/lqzhgood)
+
+<hr />
+
+![cover](public/cover_800.png)
