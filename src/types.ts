@@ -3,11 +3,12 @@ export interface Rule {
     trigger: string;
     description?: string;
     type?: 'function' | 'text';
-    format: string | string[];
+    snippet: string | string[];
 }
 
 export type EnvVars = {
     word: string;
+    lineText: string;
     fileName: string;
     fileBase: string;
     fileExt: string;
@@ -16,6 +17,5 @@ export type EnvVars = {
     languageId: string;
     lineNumber: string;
     column: string;
-    lineText: string;
     workspaceFolder: string;
 };

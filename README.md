@@ -8,50 +8,106 @@ Press `.` to transform text into anything.
 
 [中文文档](README_CN.md)
 
-## Features
+## Quick Start
 
-Dot Anything is a VS Code extension that allows you to trigger custom text transformation rules by pressing the `.` key. Simply type text followed by `.` to see available transformation options.
+```json
+{
+    "dotIt.rules": [
+        {
+            "trigger": "AABB",
+            "description": "To UPPER_CASE",
+            "snippet": "#word^AABB#"
+        }
+    ]
+}
+```
 
-### Usage
+Type `helloWorld.` → select `AABB` → get `HELLOWORLD`
+
+## How It Works
 
 1. Type any text (e.g., `helloWorld`)
 2. Type `.` to trigger completion
-3. Select the transformation rule you want (e.g., `up` to convert to uppercase)
-4. The text will be automatically replaced
+3. Select a rule (e.g., `AABB`)
+4. Text is replaced automatically
 
 ## Configuration
 
-Configure `dotIt.rules` in VS Code settings to define your transformation rules.
+Configure `dotIt.rules` in VS Code settings.
 
 ### Rule Properties
 
-| Property      | Type               | Required | Default | Description                         |
-| ------------- | ------------------ | -------- | ------- | ----------------------------------- |
-| `trigger`     | string             | Yes      | -       | Trigger keyword for filtering items |
-| `description` | string             | Yes      | -       | Rule description, supports Markdown |
-| `format`      | string \| string[] | Yes      | -       | Format string or function string    |
-| `type`        | string             | No       | `text`  | Rule type: `text` or `function`     |
-| `fileType`    | string[]           | No       | `["*"]` | Applicable language identifiers     |
+| Property      | Type                 | Required | Default | Description                              |
+| ------------- | -------------------- | -------- | ------- | ---------------------------------------- |
+| `trigger`     | string               | Yes      | -       | Trigger keyword                          |
+| `description` | string               | Yes      | -       | Description (supports Markdown)          |
+| `snippet`     | string \| string[]   | Yes      | -       | Template string or function (supports multiline array) |
+| `type`        | `text` \| `function` | No       | `text`  | Rule type                                |
+| `fileType`    | string[]             | No       | `["*"]` | Language identifiers (e.g., `["javascript"]`) |
 
-### Rule Types
+---
 
-#### 1. text Type (Default)
+## Rule Types
 
-Use placeholders for simple text replacement. Supported placeholders:
+**Environment Variables**
 
-| Placeholder         | Description                           |
-| ------------------- | ------------------------------------- |
-| `_$word`            | Input text (the word before `.`)      |
-| `_$filePath`        | Full path of the current file         |
-| `_$fileName`        | Current file name (without extension) |
-| `_$fileBase`        | Current file name (with extension)    |
-| `_$fileExt`         | Current file extension                |
-| `_$fileDir`         | Directory of the current file         |
-| `_$languageId`      | Current language identifier           |
-| `_$lineNumber`      | Current line number                   |
-| `_$column`          | Current column number                 |
-| `_$lineText`        | Current line text                     |
-| `_$workspaceFolder` | Workspace folder path                 |
+| Variable          | Description                    |
+| ----------------- | ------------------------------ |
+| `word`            | Input text (before `.`)        |
+| `filePath`        | Full file path                 |
+| `fileName`        | File name (no extension)       |
+| `fileBase`        | File name (with extension)     |
+| `fileExt`         | File extension                 |
+| `fileDir`         | File directory                 |
+| `languageId`      | Language identifier            |
+| `lineNumber`      | Current line number            |
+| `column`          | Current column number          |
+| `lineText`        | Current line text              |
+| `workspaceFolder` | Workspace folder path          |
+
+**Placeholder:** `#variable^format#`
+
+| Description   | text Mode      | function Mode      | Input         | Output        |
+| ------------- | -------------- | ------------------ | ------------- | ------------- |
+| Raw value     | `#word#`       | `fmt.raw`          | `helloWorld`  | `helloWorld`  |
+| lowercase     | `#word^aabb#`  | `fmt.toLowerCase`  | `helloWorld`  | `helloworld`  |
+| UPPERCASE     | `#word^AABB#`  | `fmt.toUpperCase`  | `helloWorld`  | `HELLOWORLD`  |
+| Capitalize    | `#word^Aa bb#` | `fmt.capitalize`   | `hello World` | `Hello world` |
+| Title Case    | `#word^Aa Bb#` | `fmt.titleCase`    | `hello world` | `Hello World` |
+| kebab-case    | `#word^aa-bb#` | `fmt.toKebabCase`  | `helloWorld`  | `hello-world` |
+| snake_case    | `#word^aa_bb#` | `fmt.toSnakeCase`  | `helloWorld`  | `hello_world` |
+| camelCase     | `#word^aaBb#`  | `fmt.toCamelCase`  | `hello-world` | `helloWorld`  |
+| PascalCase    | `#word^AaBb#`  | `fmt.toPascalCase` | `hello-world` | `HelloWorld`  |
+
+### text Type (Default)
+
+Use placeholders with optional format suffixes.
+
+**Example:**
+
+`abc.log -> console.log('abc',abc)`
+
+```json
+{
+    "trigger": "log",
+    "description": "Insert console.log",
+    "fileType": ["javascript", "typescript"],
+    "snippet": "console.log('#word#', #word#)"
+}
+```
+
+---
+
+### function Type
+
+Use JavaScript for complex transformations.
+
+**Parameters:**
+
+| Parameter | Description                                      |
+| --------- | ------------------------------------------------ |
+| `env`     | Environment object (`env.word`, `env.fileName`, etc.) |
+| `fmt`     | Formatting utilities (`fmt.toCamelCase`, etc.)   |
 
 **Examples:**
 
@@ -59,109 +115,117 @@ Use placeholders for simple text replacement. Supported placeholders:
 {
     "dotIt.rules": [
         {
-            "trigger": "up",
-            "description": "Convert to uppercase",
-            "format": "_$word.toUpperCase()"
+            "trigger": "getter",
+            "description": "Generate getter/setter methods",
+            "type": "function",
+            "snippet": [
+                "(env, { fmt }) => `\\",
+                "_${env.word}: 1,",
+                "get ${fmt.capitalize(env.word)}() {",
+                "    return this._${env.word};",
+                "},",
+                "set ${fmt.capitalize(env.word)}(v) {",
+                "    this._${env.word} = v;",
+                "}`"
+            ]
         },
         {
-            "trigger": "low",
+            "trigger": "log",
+            "description": "Insert console.log with file info",
+            "type": "function",
+            "snippet": "(env, { fmt }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
+        }
+    ]
+}
+```
+
+---
+
+## File Type Filter
+
+Limit rules to specific languages:
+
+```json
+{
+    "trigger": "print",
+    "description": "Insert print",
+    "fileType": ["python"],
+    "snippet": "print('#word#', #word#)"
+}
+```
+
+Common identifiers: `*` (all), `javascript`, `typescript`, `python`, `java`, `go`, `rust`, `html`, `css`, `json`, `markdown`
+
+Full list: [VS Code Language Identifiers](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers)
+
+## Common Configuration
+
+```json
+{
+    "dotIt.rules": [
+        // text mode
+        {
+            "trigger": "aabb",
             "description": "Convert to lowercase",
-            "format": "_$word.toLowerCase()"
+            "snippet": "#word^aabb#"
         },
         {
-            "trigger": "cap",
-            "description": "Capitalize first letter",
-            "format": "_$word.charAt(0).toUpperCase() + _$word.slice(1)"
+            "trigger": "AABB",
+            "description": "Convert to uppercase",
+            "snippet": "#word^AABB#"
+        },
+        {
+            "trigger": "aa_bb",
+            "description": "Convert to snake_case",
+            "snippet": "#word^aa_bb#"
+        },
+        {
+            "trigger": "aaBb",
+            "description": "Convert to camelCase",
+            "snippet": "#word^aaBb#"
+        },
+        {
+            "trigger": "AaBb",
+            "description": "Convert to PascalCase",
+            "snippet": "#word^AaBb#"
         },
         {
             "trigger": "func",
             "description": "Generate function template",
-            "format": [
-                "function _$word() {",
+            "snippet": [
+                "function #word#() {",
                 "    // TODO: implement",
                 "    return;",
                 "}"
             ]
-        }
-    ]
-}
-```
-
-#### 2. function Type
-
-Use JavaScript functions for more complex transformations. The function receives two parameters:
-
-- First parameter: an object containing all placeholders
-- Second parameter: contains `_$SU` ([string-utils-lite](https://www.npmjs.com/package/string-utils-lite) utility library)
-
-**Examples:**
-
-```json
-{
-    "dotIt.rules": [
-        {
-            "trigger": "camel",
-            "description": "Convert to camelCase",
-            "type": "function",
-            "format": "(env, { _$SU }) => _$SU.camelCase(env._$word)"
         },
-        {
-            "trigger": "snake",
-            "description": "Convert to snake_case",
-            "type": "function",
-            "format": "(env, { _$SU }) => _$SU.snakeCase(env._$word)"
-        },
-        {
-            "trigger": "kebab",
-            "description": "Convert to kebab-case",
-            "type": "function",
-            "format": "(env, { _$SU }) => _$SU.kebabCase(env._$word)"
-        },
+        // function mode
         {
             "trigger": "getter",
-            "description": "Generate getter method",
+            "description": "Generate getter/setter methods",
             "type": "function",
-            "format": [
-                "(env, { _$SU }) => `\\",
-                "get ${_$SU.capitalize(env._$word)}() {",
-                "    return 'aa'+this._${env._$word};",
+            "snippet": [
+                "(env, { fmt }) => `\\",
+                "_${env.word}: 1,",
+                "get ${fmt.capitalize(env.word)}() {",
+                "    return this._${env.word};",
+                "},",
+                "set ${fmt.capitalize(env.word)}(v) {",
+                "    this._${env.word} = v;",
                 "}`"
             ]
-        }
-    ]
-}
-```
-
-### File Type Filter
-
-Use `fileType` to limit rules to specific languages:
-
-```json
-{
-    "dotIt.rules": [
-        {
-            "trigger": "log",
-            "description": "Insert `console.log`",
-            "fileType": ["javascript", "typescript"],
-            "format": "console.log('_$word', _$word)"
         },
         {
-            "trigger": "print",
-            "description": "Insert `print`",
-            "fileType": ["python"],
-            "format": "print('_$word', _$word)"
+            "trigger": "log",
+            "description": "Insert console.log with file info",
+            "type": "function",
+            "snippet": "(env, { fmt }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
         }
     ]
 }
 ```
 
-Supported language identifiers include: `*` (all languages), `javascript`, `typescript`, `python`, `java`, `go`, `rust`, `html`, `css`, `json`, `markdown`, etc.
-
-For the complete list, refer to [VS Code Language Identifiers](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers).
-
 ## Debug Mode
-
-Enable debug mode to view logs in the output panel:
 
 ```json
 {
@@ -171,46 +235,24 @@ Enable debug mode to view logs in the output panel:
 
 ## Development
 
-### Requirements
-
-- Node.js 22.x
-- VS Code 1.103.0+
-
-### Commands
+**Requirements:** Node.js 22.x, VS Code 1.103.0+
 
 ```bash
-# Development build (type-check + lint + esbuild)
-npm run compile
-
-# Watch mode (esbuild + tsc in parallel)
-npm run watch
-
-# Production build (minified, no sourcemaps)
-npm run package
-
-# Type checking only
-npm run check-types
-
-# Lint only
-npm run lint
-
-# Run tests
-npm test
+npm run compile    # Development build
+npm run watch      # Watch mode
+npm run package    # Production build
+npm test           # Run tests
 ```
 
-### Debugging
-
-1. Open the project in VS Code
-2. Press `F5` to launch the Extension Development Host
-3. Test the extension in the new window
+Press `F5` to launch Extension Development Host for debugging.
 
 ## License
 
-See [LICENSE.txt](LICENSE.txt) file.
+See [LICENSE.txt](LICENSE.txt).
 
 ## Feedback & Contributing
 
-- Report issues: [GitHub Issues](https://github.com/lqzhgood/vscode-ext-dot-anything/issues)
+- Issues: [GitHub Issues](https://github.com/lqzhgood/vscode-ext-dot-anything/issues)
 - Sponsor: [GitHub Sponsors](https://github.com/sponsors/lqzhgood)
 
 <hr />

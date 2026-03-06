@@ -62,6 +62,7 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
 
                 const envVars: EnvVars = {
                     word: word,
+                    lineText: lineText.replace(/\.$/, ''), // 去掉最后一个点
                     filePath: document.fileName,
                     fileName: name,
                     fileBase: base,
@@ -70,7 +71,6 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
                     languageId: languageId,
                     lineNumber: String(position.line + 1),
                     column: String(position.character + 1),
-                    lineText: lineText,
                     workspaceFolder: workspaceFolder,
                 };
 

@@ -194,10 +194,19 @@
                                 "default": "text",
                                 "description": "Rule type. text: replace $input with the word; function: execute the format string as a function"
                             },
-                            "format": {
-                                "type": "string",
-                                "required": true,
-                                "description": "format string (use $input as placeholder) or function string"
+                            "snippet": {
+                                "anyOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                ],
+                                "description": "snippet string (use #word# as placeholder) or function string"
                             }
                         }
                     }
