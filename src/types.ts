@@ -1,5 +1,5 @@
 export interface Rule {
-    fileType?: string[];
+    fileType?: string | string[];
     trigger: string;
     description?: string;
     type?: 'function' | 'text';
@@ -7,15 +7,15 @@ export interface Rule {
 }
 
 export type EnvVars = {
-    _$word: string;
-    _$fileName: string;
-    _$fileBase: string;
-    _$fileExt: string;
-    _$filePath: string;
-    _$fileDir: string;
-    _$languageId: string;
-    _$lineNumber: string;
-    _$column: string;
-    _$lineText: string;
-    _$workspaceFolder: string;
+    word: string;
+    fileName: string;
+    fileBase: string;
+    fileExt: string;
+    filePath: string;
+    fileDir: string;
+    languageId: string;
+    lineNumber: string;
+    column: string;
+    lineText: string;
+    workspaceFolder: string;
 };

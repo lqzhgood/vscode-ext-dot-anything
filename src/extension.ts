@@ -61,17 +61,17 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
                 const { name, ext, base, dir } = path.parse(document.fileName);
 
                 const envVars: EnvVars = {
-                    _$word: word,
-                    _$filePath: document.fileName,
-                    _$fileName: name,
-                    _$fileBase: base,
-                    _$fileExt: ext,
-                    _$fileDir: dir,
-                    _$languageId: languageId,
-                    _$lineNumber: String(position.line + 1),
-                    _$column: String(position.character + 1),
-                    _$lineText: lineText,
-                    _$workspaceFolder: workspaceFolder,
+                    word: word,
+                    filePath: document.fileName,
+                    fileName: name,
+                    fileBase: base,
+                    fileExt: ext,
+                    fileDir: dir,
+                    languageId: languageId,
+                    lineNumber: String(position.line + 1),
+                    column: String(position.character + 1),
+                    lineText: lineText,
+                    workspaceFolder: workspaceFolder,
                 };
 
                 const items: vscode.CompletionItem[] = [];
