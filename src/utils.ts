@@ -5,7 +5,7 @@ import { WORKSPACE } from './const';
 class Logger {
     private channel: vscode.OutputChannel | null = null;
 
-    private getChannel(): vscode.OutputChannel {
+    getChannel(): vscode.OutputChannel {
         if (!this.channel) {
             this.channel = window.createOutputChannel(WORKSPACE);
             this.channel.appendLine('[dot anything] is active');
@@ -44,6 +44,6 @@ class Logger {
 
 export const LOG = new Logger();
 
-export function getSingleChannel() {
-    return LOG['getChannel']();
+export function getSingleChannel(): vscode.OutputChannel {
+    return LOG.getChannel();
 }
