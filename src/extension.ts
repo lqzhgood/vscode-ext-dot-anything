@@ -3,12 +3,13 @@ import { EnvVars } from './types';
 import path from 'path';
 import { getSingleChannel, LOG } from './utils';
 import { applyFormat, getRules, isRuleApplicable } from './lib';
+import { WORKSPACE } from './const';
 
 // debug
 export function activate(context: vscode.ExtensionContext) {
     const out = getSingleChannel();
-    LOG('[activate] extension activated');
-    LOG('[activate] rules: ' + JSON.stringify(getRules()));
+    LOG.info('[activate] extension activated');
+    LOG.info('[activate] rules: ' + JSON.stringify(getRules()));
 
     // 监听配置变化，重新注册 provider
     let disposable = registerProvider(out);
@@ -16,7 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration(e => {
-            if (e.affectsConfiguration('dotIt.rules')) {
+            if (e.affectsConfiguration(`${WORKSPACE}.rules`)) {
                 disposable.dispose();
                 disposable = registerProvider(out);
                 context.subscriptions.push(disposable);
@@ -37,19 +38,19 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
                 const lineText = document.lineAt(position).text;
                 const textBeforeCursor = lineText.slice(0, position.character);
 
-                LOG('triggered, textBeforeCursor: ', textBeforeCursor);
+                LOG.dev('triggered, textBeforeCursor: ', textBeforeCursor);
 
                 // 匹配 `.` 前的输入词，如 `abc.` 中的 `abc`
                 const match = textBeforeCursor.match(/(\S+)\.$/);
                 if (!match) {
-                    LOG('no match, skipping');
+                    LOG.dev('no match, skipping');
                     return undefined;
                 }
 
                 const word = match[1];
                 const languageId = document.languageId;
                 const rules = getRules();
-                LOG(
+                LOG.dev(
                     `input="${word}", languageId="${languageId}", rules=${rules.length}`,
                 );
 
@@ -78,7 +79,7 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
 
                 for (const rule of rules) {
                     if (!isRuleApplicable(rule, languageId)) {
-                        LOG(
+                        LOG.dev(
                             `rule "${rule.trigger}" skipped (fileType mismatch)`,
                         );
                         continue;
@@ -88,11 +89,11 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
                     try {
                         result = applyFormat(rule, envVars);
                     } catch (err) {
-                        LOG(`rule "${rule.trigger}" error: ${err}`);
+                        LOG.dev(`rule "${rule.trigger}" error: ${err}`);
                         continue;
                     }
 
-                    LOG(`rule "${rule.trigger}" → "${result}"`);
+                    LOG.dev(`rule "${rule.trigger}" → "${result}"`);
 
                     const item = new vscode.CompletionItem(
                         rule.trigger,
@@ -121,7 +122,7 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
                     items.push(item);
                 }
 
-                LOG(`[completion] returning ${items.length} items`);
+                LOG.dev(`[completion] returning ${items.length} items`);
                 return items.length > 0 ? items : undefined;
             },
         },

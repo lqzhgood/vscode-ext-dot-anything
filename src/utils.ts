@@ -1,28 +1,49 @@
+import * as vscode from 'vscode';
 import { workspace, window } from 'vscode';
+import { WORKSPACE } from './const';
 
-let OutputChannel: any;
+class Logger {
+    private channel: vscode.OutputChannel | null = null;
 
-export function getSingleChannel() {
-    if (!OutputChannel) {
-        OutputChannel = window.createOutputChannel('dot-anything');
+    private getChannel(): vscode.OutputChannel {
+        if (!this.channel) {
+            this.channel = window.createOutputChannel(WORKSPACE);
+            this.channel.appendLine('[dot anything] is active');
+        }
+        return this.channel;
     }
-    return OutputChannel;
+
+    private isDebug(): boolean {
+        const config = workspace.getConfiguration(WORKSPACE);
+        return config.get('debug') ?? false;
+    }
+
+    private log(prefix: string, ...args: any[]): void {
+        const message = args
+            .map(v => (typeof v === 'string' ? v : JSON.stringify(v)))
+            .join(' ');
+        this.getChannel().appendLine(`[${WORKSPACE}]${prefix}${message}`);
+    }
+
+    /**
+     * Always output, regardless of debug setting
+     */
+    info(...args: any[]): void {
+        this.log('[INFO] ', ...args);
+    }
+
+    /**
+     * Only output when debug is true in configuration
+     */
+    dev(...args: any[]): void {
+        if (this.isDebug()) {
+            this.log('[DEV] ', ...args);
+        }
+    }
 }
 
-export function LOG(...args: any[]) {
-    const config = workspace.getConfiguration('dotIt');
-    const debug = config.get('debug');
+export const LOG = new Logger();
 
-    if (!debug) {
-        return;
-    }
-
-    OutputChannel.appendLine(
-        '[dot it]' +
-            args
-                .map(v => (typeof v === 'string' ? v : JSON.stringify(v)))
-                .join(' '),
-    );
-    // 自动打开控制台
-    // out.show();
+export function getSingleChannel() {
+    return LOG['getChannel']();
 }

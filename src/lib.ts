@@ -67,7 +67,7 @@ const fns = quickRules.reduce(
 );
 
 export function getRules(): Rule[] {
-    const config = vscode.workspace.getConfiguration('dotIt');
+    const config = vscode.workspace.getConfiguration('WORKSPACE');
     return config.get<Rule[]>('rules') ?? [];
 }
 

@@ -36,19 +36,22 @@ This is a VS Code extension ("dot-anything") that provides dot-triggered complet
 **Entry point**: `src/extension.ts` → bundled by esbuild to `dist/extension.js` (CJS, Node platform, `vscode` externalized).
 
 **Build pipeline**:
+
 - esbuild (`esbuild.js`) bundles `src/extension.ts` → `dist/extension.js`
 - Tests are compiled separately via `tsc` to `out/` and run with `@vscode/test-cli` (config in `.vscode-test.mjs`)
 - `tsconfig.json` uses `rootDir: src`, `module: Node16`, `target: ES2022`, strict mode
 
-**Extension configuration** (`dotIt.rules` in VS Code settings): array of rules, each with:
+**Extension configuration** (`dot-anything.rules` in VS Code settings): array of rules, each with:
+
 - `label` (trigger keyword)
 - `description` (shown in completion, supports Markdown)
 - `format` (transform function string)
 - `fileType` (optional, array of VS Code language identifiers; `*` matches all)
 
 **Key files**:
-- `src/extension.ts` — `activate()` reads `dotIt` config and registers `CompletionItemProvider`s triggered by `.`
+
+- `src/extension.ts` — `activate()` reads `dot-anything. config and registers `CompletionItemProvider`s triggered by `.`
 - `src/const.ts` — list of supported VS Code language identifiers (mirrors the enum in `package.json` `contributes.configuration`)
 - `src/test/extension.test.ts` — Mocha test suite
 
-**Status**: The extension is in early/prototype stage. `extension.ts` contains experimental inline completion providers that are not yet wired to the `dotIt.rules` configuration.
+**Status**: The extension is in early/prototype stage. `extension.ts` contains experimental inline completion providers that are not yet wired to the `dot-anything.rules` configuration.

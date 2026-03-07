@@ -12,7 +12,7 @@ Press `.` to transform text into anything.
 
 ```json
 {
-    "dotIt.rules": [
+    "dot-anything.rules": [
         {
             "trigger": "AABB",
             "description": "To UPPER_CASE",
@@ -33,17 +33,17 @@ Type `helloWorld.` → select `AABB` → get `HELLOWORLD`
 
 ## Configuration
 
-Configure `dotIt.rules` in VS Code settings.
+Configure `dot-anything.rules` in VS Code settings.
 
 ### Rule Properties
 
-| Property      | Type                 | Required | Default | Description                              |
-| ------------- | -------------------- | -------- | ------- | ---------------------------------------- |
-| `trigger`     | string               | Yes      | -       | Trigger keyword                          |
-| `description` | string               | Yes      | -       | Description (supports Markdown)          |
+| Property      | Type                 | Required | Default | Description                                            |
+| ------------- | -------------------- | -------- | ------- | ------------------------------------------------------ |
+| `trigger`     | string               | Yes      | -       | Trigger keyword                                        |
+| `description` | string               | Yes      | -       | Description (supports Markdown)                        |
 | `snippet`     | string \| string[]   | Yes      | -       | Template string or function (supports multiline array) |
-| `type`        | `text` \| `function` | No       | `text`  | Rule type                                |
-| `fileType`    | string[]             | No       | `["*"]` | Language identifiers (e.g., `["javascript"]`) |
+| `type`        | `text` \| `function` | No       | `text`  | Rule type                                              |
+| `fileType`    | string[]             | No       | `["*"]` | Language identifiers (e.g., `["javascript"]`)          |
 
 ---
 
@@ -51,33 +51,33 @@ Configure `dotIt.rules` in VS Code settings.
 
 **Environment Variables**
 
-| Variable          | Description                    |
-| ----------------- | ------------------------------ |
-| `word`            | Input text (before `.`)        |
-| `filePath`        | Full file path                 |
-| `fileName`        | File name (no extension)       |
-| `fileBase`        | File name (with extension)     |
-| `fileExt`         | File extension                 |
-| `fileDir`         | File directory                 |
-| `languageId`      | Language identifier            |
-| `lineNumber`      | Current line number            |
-| `column`          | Current column number          |
-| `lineText`        | Current line text              |
-| `workspaceFolder` | Workspace folder path          |
+| Variable          | Description                |
+| ----------------- | -------------------------- |
+| `word`            | Input text (before `.`)    |
+| `filePath`        | Full file path             |
+| `fileName`        | File name (no extension)   |
+| `fileBase`        | File name (with extension) |
+| `fileExt`         | File extension             |
+| `fileDir`         | File directory             |
+| `languageId`      | Language identifier        |
+| `lineNumber`      | Current line number        |
+| `column`          | Current column number      |
+| `lineText`        | Current line text          |
+| `workspaceFolder` | Workspace folder path      |
 
 **Placeholder:** `#variable^format#`
 
-| Description   | text Mode      | function Mode      | Input         | Output        |
-| ------------- | -------------- | ------------------ | ------------- | ------------- |
-| Raw value     | `#word#`       | `fmt.raw`          | `helloWorld`  | `helloWorld`  |
-| lowercase     | `#word^aabb#`  | `fmt.toLowerCase`  | `helloWorld`  | `helloworld`  |
-| UPPERCASE     | `#word^AABB#`  | `fmt.toUpperCase`  | `helloWorld`  | `HELLOWORLD`  |
-| Capitalize    | `#word^Aa bb#` | `fmt.capitalize`   | `hello World` | `Hello world` |
-| Title Case    | `#word^Aa Bb#` | `fmt.titleCase`    | `hello world` | `Hello World` |
-| kebab-case    | `#word^aa-bb#` | `fmt.toKebabCase`  | `helloWorld`  | `hello-world` |
-| snake_case    | `#word^aa_bb#` | `fmt.toSnakeCase`  | `helloWorld`  | `hello_world` |
-| camelCase     | `#word^aaBb#`  | `fmt.toCamelCase`  | `hello-world` | `helloWorld`  |
-| PascalCase    | `#word^AaBb#`  | `fmt.toPascalCase` | `hello-world` | `HelloWorld`  |
+| Description | text Mode      | function Mode      | Input         | Output        |
+| ----------- | -------------- | ------------------ | ------------- | ------------- |
+| Raw value   | `#word#`       | `fmt.raw`          | `helloWorld`  | `helloWorld`  |
+| lowercase   | `#word^aabb#`  | `fmt.toLowerCase`  | `helloWorld`  | `helloworld`  |
+| UPPERCASE   | `#word^AABB#`  | `fmt.toUpperCase`  | `helloWorld`  | `HELLOWORLD`  |
+| Capitalize  | `#word^Aa bb#` | `fmt.capitalize`   | `hello World` | `Hello world` |
+| Title Case  | `#word^Aa Bb#` | `fmt.titleCase`    | `hello world` | `Hello World` |
+| kebab-case  | `#word^aa-bb#` | `fmt.toKebabCase`  | `helloWorld`  | `hello-world` |
+| snake_case  | `#word^aa_bb#` | `fmt.toSnakeCase`  | `helloWorld`  | `hello_world` |
+| camelCase   | `#word^aaBb#`  | `fmt.toCamelCase`  | `hello-world` | `helloWorld`  |
+| PascalCase  | `#word^AaBb#`  | `fmt.toPascalCase` | `hello-world` | `HelloWorld`  |
 
 ### text Type (Default)
 
@@ -104,10 +104,10 @@ Use JavaScript for complex transformations.
 
 **Parameters:**
 
-| Parameter | Description                                      |
-| --------- | ------------------------------------------------ |
+| Parameter | Description                                           |
+| --------- | ----------------------------------------------------- |
 | `env`     | Environment object (`env.word`, `env.fileName`, etc.) |
-| `fmt`     | Formatting utilities (`fmt.toCamelCase`, etc.)   |
+| `fmt`     | Formatting utilities (`fmt.toCamelCase`, etc.)        |
 
 **Examples:**
 
@@ -139,7 +139,7 @@ set Abc(v) {
 
 ```json
 {
-    "dotIt.rules": [
+    "dot-anything.rules": [
         {
             "trigger": "getter",
             "description": "Generate getter/setter methods",
@@ -182,7 +182,7 @@ Full list: [VS Code Language Identifiers](https://code.visualstudio.com/docs/lan
 
 ```json
 {
-    "dotIt.rules": [
+    "dot-anything.rules": [
         // text mode
         {
             "trigger": "aabb",
@@ -249,7 +249,7 @@ Full list: [VS Code Language Identifiers](https://code.visualstudio.com/docs/lan
 
 ```json
 {
-    "dotIt.debug": true
+    "dot-anything.debug": true
 }
 ```
 

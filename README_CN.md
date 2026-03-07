@@ -12,7 +12,7 @@
 
 ```json
 {
-    "dotIt.rules": [
+    "dot-anything.rules": [
         {
             "trigger": "AABB",
             "description": "转大写",
@@ -33,7 +33,7 @@
 
 ## 配置
 
-在 VS Code 设置中配置 `dotIt.rules`。
+在 VS Code 设置中配置 `dot-anything.rules`。
 
 ### 规则属性
 
@@ -139,7 +139,7 @@ set Abc(v) {
 
 ```json
 {
-    "dotIt.rules": [
+    "dot-anything.rules": [
         {
             "trigger": "getter",
             "description": "生成 getter setter 方法",
@@ -182,7 +182,7 @@ set Abc(v) {
 
 ```json
 {
-    "dotIt.rules": [
+    "dot-anything.rules": [
         // text 模式
         {
             "trigger": "aabb",
@@ -249,7 +249,7 @@ set Abc(v) {
 
 ```json
 {
-    "dotIt.debug": true
+    "dot-anything.debug": true
 }
 ```
 
