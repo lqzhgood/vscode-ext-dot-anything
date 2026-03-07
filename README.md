@@ -111,6 +111,32 @@ Use JavaScript for complex transformations.
 
 **Examples:**
 
+```
+ccc.log -> console.log('[/home/1.js:23] ccc:', ccc)
+```
+
+```json
+{
+    "trigger": "log",
+    "description": "Insert console.log with file info",
+    "type": "function",
+    "snippet": "(env, { fmt }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
+}
+```
+
+```
+abc.getter ->
+
+_abc: 1,
+get Abc() {
+    return this._abc;
+},
+set Abc(v) {
+    this._abc = v;
+}
+
+```
+
 ```json
 {
     "dotIt.rules": [
@@ -128,12 +154,6 @@ Use JavaScript for complex transformations.
                 "    this._${env.word} = v;",
                 "}`"
             ]
-        },
-        {
-            "trigger": "log",
-            "description": "Insert console.log with file info",
-            "type": "function",
-            "snippet": "(env, { fmt }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
         }
     ]
 }

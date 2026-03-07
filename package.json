@@ -6,10 +6,10 @@
     "author": {
         "name": "lqzh"
     },
-    "version": "1.0.2",
+    "version": "1.1.0",
     "icon": "public/logo_128.png",
     "galleryBanner": {
-        "color": "#C80000",
+        "color": "#0D1117",
         "theme": "dark"
     },
     "engines": {
