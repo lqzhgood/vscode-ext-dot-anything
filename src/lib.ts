@@ -8,6 +8,7 @@ import {
 } from 'string-utils-lite';
 import * as vscode from 'vscode';
 import { EnvVars, Rule } from './types';
+import { WORKSPACE } from './const';
 
 export const quickRules = [
     {
@@ -67,7 +68,7 @@ const fns = quickRules.reduce(
 );
 
 export function getRules(): Rule[] {
-    const config = vscode.workspace.getConfiguration('WORKSPACE');
+    const config = vscode.workspace.getConfiguration(WORKSPACE);
     return config.get<Rule[]>('rules') ?? [];
 }
 
