@@ -1,11 +1,26 @@
 import * as vscode from 'vscode';
 import { EnvVars, Rule } from './types';
 import { WORKSPACE } from './const';
-function capitalize(str = '') {
+
+export function toLowerCase(str = '') {
+    return str.toLowerCase();
+}
+
+export function toUpperCase(str = '') {
+    return str.toUpperCase();
+}
+
+export function toUpperCaseFirst(str = '') {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+export function toCapitalize(str = '') {
     if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
-function titleCase(str = '') {
+
+export function toTitleCase(str = '') {
     return str
         .toLowerCase()
         .split(/(\s+)/)
@@ -14,28 +29,32 @@ function titleCase(str = '') {
         )
         .join('');
 }
-function toKebabCase(str = '') {
+
+export function toKebabCase(str = '') {
     return str
         .replace(/([a-z])([A-Z])/g, '$1-$2')
         .replace(/[\s_]+/g, '-')
         .toLowerCase()
         .replace(/^-+|-+$/g, '');
 }
-function toSnakeCase(str = '') {
+
+export function toSnakeCase(str = '') {
     return str
         .replace(/([a-z])([A-Z])/g, '$1_$2')
         .replace(/[\s-]+/g, '_')
         .toLowerCase()
         .replace(/^_+|_+$/g, '');
 }
-function toCamelCase(str = '') {
+
+export function toCamelCase(str = '') {
     return str
         .toLowerCase()
         .split(/[\s-_]+/)
         .map((w, i) => (i === 0 ? w : w.charAt(0).toUpperCase() + w.slice(1)))
         .join('');
 }
-function toPascalCase(str = '') {
+
+export function toPascalCase(str = '') {
     return str
         .toLowerCase()
         .split(/[\s-_]+/)
@@ -51,42 +70,47 @@ export const quickRules = [
     },
     {
         name: 'toLowerCase',
-        makeKey: (k: string) => '#' + k + '^aabb#',
-        makeValue: (v: string) => v.toLowerCase(),
+        makeKey: (k: string) => '#' + k + '^toLowerCase#',
+        makeValue: toLowerCase,
     },
     {
         name: 'toUpperCase',
-        makeKey: (k: string) => '#' + k + '^AABB#',
-        makeValue: (v: string) => v.toUpperCase(),
+        makeKey: (k: string) => '#' + k + '^toUpperCase#',
+        makeValue: toUpperCase,
     },
     {
-        name: 'capitalize',
-        makeKey: (k: string) => '#' + k + '^Aa bb#',
-        makeValue: capitalize,
+        name: 'toUpperCaseFirst',
+        makeKey: (k: string) => '#' + k + '^toUpperCaseFirst#',
+        makeValue: toUpperCaseFirst,
     },
     {
-        name: 'titleCase',
-        makeKey: (k: string) => '#' + k + '^Aa Bb#',
-        makeValue: titleCase,
+        name: 'toCapitalize',
+        makeKey: (k: string) => '#' + k + '^toCapitalize#',
+        makeValue: toCapitalize,
+    },
+    {
+        name: 'toTitleCase',
+        makeKey: (k: string) => '#' + k + '^toTitleCase#',
+        makeValue: toTitleCase,
     },
     {
         name: 'toKebabCase',
-        makeKey: (k: string) => '#' + k + '^aa-bb#',
+        makeKey: (k: string) => '#' + k + '^toKebabCase#',
         makeValue: toKebabCase,
     },
     {
         name: 'toSnakeCase',
-        makeKey: (k: string) => '#' + k + '^aa_bb#',
+        makeKey: (k: string) => '#' + k + '^toSnakeCase#',
         makeValue: toSnakeCase,
     },
     {
         name: 'toCamelCase',
-        makeKey: (k: string) => '#' + k + '^aaBb#',
+        makeKey: (k: string) => '#' + k + '^toCamelCase#',
         makeValue: toCamelCase,
     },
     {
         name: 'toPascalCase',
-        makeKey: (k: string) => '#' + k + '^AaBb#',
+        makeKey: (k: string) => '#' + k + '^toPascalCase#',
         makeValue: toPascalCase,
     },
 ];
