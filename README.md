@@ -67,18 +67,18 @@ Configure `dot-anything.rules` in VS Code settings.
 
 **Placeholder:** `#variable^formatFunction#`
 
-| Description | text Mode | function Mode | Example |
-| ----------- | --------- | ------------- | ------- |
-| Keep original value | `#word#` | `fmt.raw` | `helloWorld` → `helloWorld` |
-| Convert all letters to lowercase | `#word^toLowerCase#` | `fmt.toLowerCase` | `HELLO WORLD` → `hello world`<br>`HELLOWORLD` → `helloworld` |
-| Convert all letters to uppercase | `#word^toUpperCase#` | `fmt.toUpperCase` | `hello world` → `HELLO WORLD`<br>`helloworld` → `HELLOWORLD` |
-| Capitalize first letter only | `#word^toUpperCaseFirst#` | `fmt.toUpperCaseFirst` | `hello world` → `Hello world`<br>`helloworld` → `Helloworld` |
-| Capitalize first letter, lowercase rest | `#word^toCapitalize#` | `fmt.toCapitalize` | `hello World` → `Hello world`<br>`helloWorld` → `Helloworld` |
-| Capitalize first letter of each word | `#word^toTitleCase#` | `fmt.toTitleCase` | `hello world` → `Hello World`<br>`helloWorld` → `Helloworld` |
-| Words joined with `-`, all lowercase | `#word^toKebabCase#` | `fmt.toKebabCase` | `HelloWorld` → `hello-world`<br>`Helloworld` → `helloworld` |
-| Words joined with `_`, all lowercase | `#word^toSnakeCase#` | `fmt.toSnakeCase` | `HelloWorld` → `hello_world`<br>`Helloworld` → `helloworld` |
-| First word lowercase, subsequent words capitalized | `#word^toCamelCase#` | `fmt.toCamelCase` | `hello-world` → `helloWorld`<br>`Helloworld` → `helloworld` |
-| Each word capitalized, no separator | `#word^toPascalCase#` | `fmt.toPascalCase` | `hello-world` → `HelloWorld`<br>`helloworld` → `Helloworld` |
+| Description                                        | text Mode                 | function Mode          | Example                                                      |
+| -------------------------------------------------- | ------------------------- | ---------------------- | ------------------------------------------------------------ |
+| Keep original value                                | `#word#`                  | `fns.raw`              | `helloWorld` → `helloWorld`                                  |
+| Convert all letters to lowercase                   | `#word^toLowerCase#`      | `fns.toLowerCase`      | `HELLO WORLD` → `hello world`<br>`HELLOWORLD` → `helloworld` |
+| Convert all letters to uppercase                   | `#word^toUpperCase#`      | `fns.toUpperCase`      | `hello world` → `HELLO WORLD`<br>`helloworld` → `HELLOWORLD` |
+| Capitalize first letter only                       | `#word^toUpperCaseFirst#` | `fns.toUpperCaseFirst` | `hello world` → `Hello world`<br>`helloworld` → `Helloworld` |
+| Capitalize first letter, lowercase rest            | `#word^toCapitalize#`     | `fns.toCapitalize`     | `hello World` → `Hello world`<br>`helloWorld` → `Helloworld` |
+| Capitalize first letter of each word               | `#word^toTitleCase#`      | `fns.toTitleCase`      | `hello world` → `Hello World`<br>`helloWorld` → `Helloworld` |
+| Words joined with `-`, all lowercase               | `#word^toKebabCase#`      | `fns.toKebabCase`      | `HelloWorld` → `hello-world`<br>`Helloworld` → `helloworld`  |
+| Words joined with `_`, all lowercase               | `#word^toSnakeCase#`      | `fns.toSnakeCase`      | `HelloWorld` → `hello_world`<br>`Helloworld` → `helloworld`  |
+| First word lowercase, subsequent words capitalized | `#word^toCamelCase#`      | `fns.toCamelCase`      | `hello-world` → `helloWorld`<br>`Helloworld` → `helloworld`  |
+| Each word capitalized, no separator                | `#word^toPascalCase#`     | `fns.toPascalCase`     | `hello-world` → `HelloWorld`<br>`helloworld` → `Helloworld`  |
 
 ### text Type (Default)
 
@@ -108,7 +108,7 @@ Use JavaScript for complex transformations.
 | Parameter | Description                                           |
 | --------- | ----------------------------------------------------- |
 | `env`     | Environment object (`env.word`, `env.fileName`, etc.) |
-| `fmt`     | Formatting utilities (`fmt.toCamelCase`, etc.)        |
+| `fns`     | Formatting utilities (`fns.toCamelCase`, etc.)        |
 
 **Examples:**
 
@@ -121,7 +121,7 @@ ccc.log -> console.log('[/home/1.js:23] ccc:', ccc)
     "trigger": "log",
     "description": "Insert console.log with file info",
     "type": "function",
-    "snippet": "(env, { fmt }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
+    "snippet": "(env, { fns }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
 }
 ```
 
@@ -146,12 +146,12 @@ set Abc(v) {
             "description": "Generate getter/setter methods",
             "type": "function",
             "snippet": [
-                "(env, { fmt }) => `\\",
+                "(env, { fns }) => `\\",
                 "_${env.word}: 1,",
-                "get ${fmt.toPascalCase(env.word)}() {",
+                "get ${fns.toPascalCase(env.word)}() {",
                 "    return this._${env.word};",
                 "},",
-                "set ${fmt.toPascalCase(env.word)}(v) {",
+                "set ${fns.toPascalCase(env.word)}(v) {",
                 "    this._${env.word} = v;",
                 "}`"
             ]
@@ -251,12 +251,12 @@ Full list: [VS Code Language Identifiers](https://code.visualstudio.com/docs/lan
             "description": "Generate getter/setter methods",
             "type": "function",
             "snippet": [
-                "(env, { fmt }) => `\\",
+                "(env, { fns }) => `\\",
                 "_${env.word}: 1,",
-                "get ${fmt.toPascalCase(env.word)}() {",
+                "get ${fns.toPascalCase(env.word)}() {",
                 "    return this._${env.word};",
                 "},",
-                "set ${fmt.toPascalCase(env.word)}(v) {",
+                "set ${fns.toPascalCase(env.word)}(v) {",
                 "    this._${env.word} = v;",
                 "}`"
             ]
@@ -265,7 +265,7 @@ Full list: [VS Code Language Identifiers](https://code.visualstudio.com/docs/lan
             "trigger": "log",
             "description": "Insert console.log with file info",
             "type": "function",
-            "snippet": "(env, { fmt }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
+            "snippet": "(env, { fns }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
         }
     ]
 }

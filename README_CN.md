@@ -69,16 +69,16 @@
 
 | 说明                           | text 模式                 | function 模式          | 示例                                                         |
 | ------------------------------ | ------------------------- | ---------------------- | ------------------------------------------------------------ |
-| 保持原样                       | `#word#`                  | `fmt.raw`              | `helloWorld` → `helloWorld`                                  |
-| 所有字母转为小写               | `#word^toLowerCase#`      | `fmt.toLowerCase`      | `HELLO WORLD` → `hello world`<br>`HELLOWORLD` → `helloworld` |
-| 所有字母转为大写               | `#word^toUpperCase#`      | `fmt.toUpperCase`      | `hello world` → `HELLO WORLD`<br>`helloworld` → `HELLOWORLD` |
-| 仅首字母大写，其余不变         | `#word^toUpperCaseFirst#` | `fmt.toUpperCaseFirst` | `hello world` → `Hello world`<br>`helloworld` → `Helloworld` |
-| 首字母大写，其余字母小写       | `#word^toCapitalize#`     | `fmt.toCapitalize`     | `hello World` → `Hello world`<br>`helloWorld` → `Helloworld` |
-| 每个单词首字母大写             | `#word^toTitleCase#`      | `fmt.toTitleCase`      | `hello world` → `Hello World`<br>`helloWorld` → `Helloworld` |
-| 单词间用 `-` 连接，全小写      | `#word^toKebabCase#`      | `fmt.toKebabCase`      | `HelloWorld` → `hello-world`<br>`Helloworld` → `helloworld`  |
-| 单词间用 `_` 连接，全小写      | `#word^toSnakeCase#`      | `fmt.toSnakeCase`      | `HelloWorld` → `hello_world`<br>`Helloworld` → `helloworld`  |
-| 首单词小写，后续单词首字母大写 | `#word^toCamelCase#`      | `fmt.toCamelCase`      | `hello-world` → `helloWorld`<br>`Helloworld` → `helloworld`  |
-| 每个单词首字母大写，无分隔符   | `#word^toPascalCase#`     | `fmt.toPascalCase`     | `hello-world` → `HelloWorld`<br>`helloworld` → `Helloworld`  |
+| 保持原样                       | `#word#`                  | `fns.raw`              | `helloWorld` → `helloWorld`                                  |
+| 所有字母转为小写               | `#word^toLowerCase#`      | `fns.toLowerCase`      | `HELLO WORLD` → `hello world`<br>`HELLOWORLD` → `helloworld` |
+| 所有字母转为大写               | `#word^toUpperCase#`      | `fns.toUpperCase`      | `hello world` → `HELLO WORLD`<br>`helloworld` → `HELLOWORLD` |
+| 仅首字母大写，其余不变         | `#word^toUpperCaseFirst#` | `fns.toUpperCaseFirst` | `hello world` → `Hello world`<br>`helloworld` → `Helloworld` |
+| 首字母大写，其余字母小写       | `#word^toCapitalize#`     | `fns.toCapitalize`     | `hello World` → `Hello world`<br>`helloWorld` → `Helloworld` |
+| 每个单词首字母大写             | `#word^toTitleCase#`      | `fns.toTitleCase`      | `hello world` → `Hello World`<br>`helloWorld` → `Helloworld` |
+| 单词间用 `-` 连接，全小写      | `#word^toKebabCase#`      | `fns.toKebabCase`      | `HelloWorld` → `hello-world`<br>`Helloworld` → `helloworld`  |
+| 单词间用 `_` 连接，全小写      | `#word^toSnakeCase#`      | `fns.toSnakeCase`      | `HelloWorld` → `hello_world`<br>`Helloworld` → `helloworld`  |
+| 首单词小写，后续单词首字母大写 | `#word^toCamelCase#`      | `fns.toCamelCase`      | `hello-world` → `helloWorld`<br>`Helloworld` → `helloworld`  |
+| 每个单词首字母大写，无分隔符   | `#word^toPascalCase#`     | `fns.toPascalCase`     | `hello-world` → `HelloWorld`<br>`helloworld` → `Helloworld`  |
 
 ### text 类型（默认）
 
@@ -108,7 +108,7 @@
 | 参数  | 说明                                          |
 | ----- | --------------------------------------------- |
 | `env` | 环境变量对象（`env.word`、`env.fileName` 等） |
-| `fmt` | 格式化工具（`fmt.toCamelCase` 等）            |
+| `fns` | 格式化工具（`fns.toCamelCase` 等）            |
 
 **示例：**
 
@@ -121,7 +121,7 @@ ccc.log -> console.log('[/home/1.js:23] ccc:', ccc)
     "trigger": "log",
     "description": "插入带文件信息的 console.log",
     "type": "function",
-    "snippet": "(env, { fmt }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
+    "snippet": "(env, { fns }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
 }
 ```
 
@@ -146,12 +146,12 @@ set Abc(v) {
             "description": "生成 getter setter 方法",
             "type": "function",
             "snippet": [
-                "(env, { fmt }) => `\\",
+                "(env, { fns }) => `\\",
                 "_${env.word}: 1,",
-                "get ${fmt.toPascalCase(env.word)}() {",
+                "get ${fns.toPascalCase(env.word)}() {",
                 "    return this._${env.word};",
                 "},",
-                "set ${fmt.toPascalCase(env.word)}(v) {",
+                "set ${fns.toPascalCase(env.word)}(v) {",
                 "    this._${env.word} = v;",
                 "}`"
             ]
@@ -251,19 +251,19 @@ set Abc(v) {
             "trigger": "log",
             "description": "插入带文件信息的 console.log",
             "type": "function",
-            "snippet": "(env, { fmt }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
+            "snippet": "(env, { fns }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
         },
         {
             "trigger": "getter",
             "description": "生成 getter setter 方法",
             "type": "function",
             "snippet": [
-                "(env, { fmt }) => `\\",
+                "(env, { fns }) => `\\",
                 "_${env.word}: 1,",
-                "get ${fmt.toPascalCase(env.word)}() {",
+                "get ${fns.toPascalCase(env.word)}() {",
                 "    return this._${env.word};",
                 "},",
-                "set ${fmt.toPascalCase(env.word)}(v) {",
+                "set ${fns.toPascalCase(env.word)}(v) {",
                 "    this._${env.word} = v;",
                 "}`"
             ]

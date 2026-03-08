@@ -36,6 +36,7 @@ This is a VS Code extension ("dot-anything") that provides dot-triggered complet
 **Entry point**: `src/extension.ts` → bundled by esbuild to `dist/extension.js` (CJS, Node platform, `vscode` externalized).
 
 **Build pipeline**:
+
 - esbuild (`esbuild.js`) bundles `src/extension.ts` → `dist/extension.js`
 - Tests are compiled separately via `tsc` to `out/` and run with `@vscode/test-cli` (config in `.vscode-test.mjs`)
 - `tsconfig.json` uses `rootDir: src`, `module: Node16`, `target: ES2022`, strict mode
@@ -43,19 +44,21 @@ This is a VS Code extension ("dot-anything") that provides dot-triggered complet
 **Configuration namespace**: `dot-anything` (defined in `src/const.ts` as `WORKSPACE`)
 
 **Key files**:
+
 - `src/extension.ts` — `activate()` registers `CompletionItemProvider` triggered by `.`
 - `src/lib.ts` — Core logic: `getRules()`, `applyFormat()`, `isRuleApplicable()`, and `quickRules` for format conversions
 - `src/types.ts` — `Rule` and `EnvVars` interfaces
 - `src/utils.ts` — `Logger` class with `info()` (always logs) and `dev()` (logs only when `dot-anything.debug` is true)
 
 **Rule processing flow**:
+
 1. User types `word.` → triggers completion
 2. `provideCompletionItems()` matches `word` before `.`
 3. For each rule in `dot-anything.rules`:
-   - Check `fileType` filter via `isRuleApplicable()`
-   - Apply format via `applyFormat()`:
-     - `text` type: Replace `#placeholder^format#` patterns (e.g., `#word^AABB#` → uppercase)
-     - `function` type: Execute snippet as JS arrow function with `(env, { fmt })` params
+    - Check `fileType` filter via `isRuleApplicable()`
+    - Apply format via `applyFormat()`:
+        - `text` type: Replace `#placeholder^format#` patterns (e.g., `#word^AABB#` → uppercase)
+        - `function` type: Execute snippet as JS arrow function with `(env, { fns })` params
 4. Return completion items with transformed results
 
 **Format suffixes** (text mode): `#word#` (raw), `^aabb` (lower), `^AABB` (upper), `^aa-bb` (kebab), `^aa_bb` (snake), `^aaBb` (camel), `^AaBb` (pascal), `^Aa bb` (capitalize), `^Aa Bb` (title)

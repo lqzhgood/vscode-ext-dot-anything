@@ -136,7 +136,7 @@ export function applyFormat(rule: Rule, keyWords: EnvVars): string {
     if (type === 'function') {
         // format 是一个箭头函数字符串，执行后传入 $input 等参数
         const fn = new Function(`return (${snippetStr})`)();
-        return fn(keyWords, { fmt: fns });
+        return fn(keyWords, { fns });
     } else {
         return Object.entries(keyWords).reduce((pre, [key, value]) => {
             return quickRules.reduce((iPre, { makeKey, makeValue }) => {
