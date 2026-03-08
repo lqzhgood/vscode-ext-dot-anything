@@ -14,21 +14,21 @@
 {
     "dot-anything.rules": [
         {
-            "trigger": "AABB",
+            "trigger": "upper",
             "description": "转大写",
-            "snippet": "#word^AABB#"
+            "snippet": "#word^toUpperCase#"
         }
     ]
 }
 ```
 
-输入 `helloWorld.` → 选择 `AABB` → 得到 `HELLOWORLD`
+输入 `helloWorld.` → 选择 `upper` → 得到 `HELLOWORLD`
 
 ## 工作原理
 
 1. 输入任意文本（如 `helloWorld`）
 2. 输入 `.` 触发补全
-3. 选择规则（如 `AABB`）
+3. 选择规则（如 `upper`）
 4. 文本自动替换
 
 ## 配置
@@ -65,19 +65,20 @@
 | `lineText`        | 当前行文本         |
 | `workspaceFolder` | 工作区路径         |
 
-**占位符：** `#环境变量^格式#`
+**占位符：** `#环境变量^格式函数#`
 
-| 说明       | text 模式      | function 模式      | 输入          | 输出          |
-| ---------- | -------------- | ------------------ | ------------- | ------------- |
-| 原始值     | `#word#`       | `fmt.raw`          | `helloWorld`  | `helloWorld`  |
-| 转换为小写 | `#word^aabb#`  | `fmt.toLowerCase`  | `helloWorld`  | `helloworld`  |
-| 转换为大写 | `#word^AABB#`  | `fmt.toUpperCase`  | `helloWorld`  | `HELLOWORLD`  |
-| 首字母大写 | `#word^Aa bb#` | `fmt.capitalize`   | `hello World` | `Hello world` |
-| 标题格式   | `#word^Aa Bb#` | `fmt.titleCase`    | `hello world` | `Hello World` |
-| 短横线命名 | `#word^aa-bb#` | `fmt.toKebabCase`  | `helloWorld`  | `hello-world` |
-| 蛇形命名   | `#word^aa_bb#` | `fmt.toSnakeCase`  | `helloWorld`  | `hello_world` |
-| 驼峰命名   | `#word^aaBb#`  | `fmt.toCamelCase`  | `hello-world` | `helloWorld`  |
-| 帕斯卡命名 | `#word^AaBb#`  | `fmt.toPascalCase` | `hello-world` | `HelloWorld`  |
+| 说明                           | text 模式                 | function 模式          | 示例                                                         |
+| ------------------------------ | ------------------------- | ---------------------- | ------------------------------------------------------------ |
+| 保持原样                       | `#word#`                  | `fmt.raw`              | `helloWorld` → `helloWorld`                                  |
+| 所有字母转为小写               | `#word^toLowerCase#`      | `fmt.toLowerCase`      | `HELLO WORLD` → `hello world`<br>`HELLOWORLD` → `helloworld` |
+| 所有字母转为大写               | `#word^toUpperCase#`      | `fmt.toUpperCase`      | `hello world` → `HELLO WORLD`<br>`helloworld` → `HELLOWORLD` |
+| 仅首字母大写，其余不变         | `#word^toUpperCaseFirst#` | `fmt.toUpperCaseFirst` | `hello world` → `Hello world`<br>`helloworld` → `Helloworld` |
+| 首字母大写，其余字母小写       | `#word^toCapitalize#`     | `fmt.toCapitalize`     | `hello World` → `Hello world`<br>`helloWorld` → `Helloworld` |
+| 每个单词首字母大写             | `#word^toTitleCase#`      | `fmt.toTitleCase`      | `hello world` → `Hello World`<br>`helloWorld` → `Helloworld` |
+| 单词间用 `-` 连接，全小写      | `#word^toKebabCase#`      | `fmt.toKebabCase`      | `HelloWorld` → `hello-world`<br>`Helloworld` → `helloworld`  |
+| 单词间用 `_` 连接，全小写      | `#word^toSnakeCase#`      | `fmt.toSnakeCase`      | `HelloWorld` → `hello_world`<br>`Helloworld` → `helloworld`  |
+| 首单词小写，后续单词首字母大写 | `#word^toCamelCase#`      | `fmt.toCamelCase`      | `hello-world` → `helloWorld`<br>`Helloworld` → `helloworld`  |
+| 每个单词首字母大写，无分隔符   | `#word^toPascalCase#`     | `fmt.toPascalCase`     | `hello-world` → `HelloWorld`<br>`helloworld` → `Helloworld`  |
 
 ### text 类型（默认）
 
@@ -147,10 +148,10 @@ set Abc(v) {
             "snippet": [
                 "(env, { fmt }) => `\\",
                 "_${env.word}: 1,",
-                "get ${fmt.capitalize(env.word)}() {",
+                "get ${fmt.toPascalCase(env.word)}() {",
                 "    return this._${env.word};",
                 "},",
-                "set ${fmt.capitalize(env.word)}(v) {",
+                "set ${fmt.toPascalCase(env.word)}(v) {",
                 "    this._${env.word} = v;",
                 "}`"
             ]
@@ -185,29 +186,54 @@ set Abc(v) {
     "dot-anything.rules": [
         // text 模式
         {
-            "trigger": "aabb",
-            "description": "转换为小写",
-            "snippet": "#word^aabb#"
+            "trigger": "raw",
+            "description": "保持原样\n示例: helloWorld → helloWorld",
+            "snippet": "#word#"
         },
         {
-            "trigger": "AABB",
-            "description": "转换为大写",
-            "snippet": "#word^AABB#"
+            "trigger": "toLowerCase",
+            "description": "所有字母转为小写\n`HELLO WORLD → hello world`\n`HELLOWORLD → helloworld`",
+            "snippet": "#word^toLowerCase#"
         },
         {
-            "trigger": "aa_bb",
-            "description": "转换为蛇形命名",
-            "snippet": "#word^aa_bb#"
+            "trigger": "toUpperCase",
+            "description": "所有字母转为大写\n`hello world → HELLO WORLD`\n`helloworld → HELLOWORLD`",
+            "snippet": "#word^toUpperCase#"
         },
         {
-            "trigger": "aaBb",
-            "description": "转换为驼峰命名",
-            "snippet": "#word^aaBb#"
+            "trigger": "toUpperCaseFirst",
+            "description": "仅首字母大写，其余不变\n`hello world → Hello world`\n`helloworld → Helloworld`",
+            "snippet": "#word^toUpperCaseFirst#"
         },
         {
-            "trigger": "AaBb",
-            "description": "转换为帕斯卡命名",
-            "snippet": "#word^AaBb#"
+            "trigger": "toCapitalize",
+            "description": "首字母大写，其余字母小写\n`hello World → Hello world`\n`helloWorld → Helloworld`",
+            "snippet": "#word^toCapitalize#"
+        },
+        {
+            "trigger": "toTitleCase",
+            "description": "每个单词首字母大写\n`hello world → Hello World`\n`helloWorld → Helloworld`",
+            "snippet": "#word^toTitleCase#"
+        },
+        {
+            "trigger": "toKebabCase",
+            "description": "单词间用 `-` 连接，全小写\n`HelloWorld → hello-world`\n`Helloworld → helloworld`",
+            "snippet": "#word^toKebabCase#"
+        },
+        {
+            "trigger": "toSnakeCase",
+            "description": "单词间用 `_` 连接，全小写\n`HelloWorld → hello_world`\n`Helloworld → helloworld`",
+            "snippet": "#word^toSnakeCase#"
+        },
+        {
+            "trigger": "toCamelCase",
+            "description": "首单词小写，后续单词首字母大写\n`hello-world → helloWorld`\n`Helloworld → helloworld`",
+            "snippet": "#word^toCamelCase#"
+        },
+        {
+            "trigger": "toPascalCase",
+            "description": "每个单词首字母大写，无分隔符\n`hello-world → HelloWorld`\n`helloworld → Helloworld`",
+            "snippet": "#word^toPascalCase#"
         },
         {
             "trigger": "func",
@@ -220,6 +246,13 @@ set Abc(v) {
             ]
         },
         // function 模式
+
+        {
+            "trigger": "log",
+            "description": "插入带文件信息的 console.log",
+            "type": "function",
+            "snippet": "(env, { fmt }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
+        },
         {
             "trigger": "getter",
             "description": "生成 getter setter 方法",
@@ -227,19 +260,13 @@ set Abc(v) {
             "snippet": [
                 "(env, { fmt }) => `\\",
                 "_${env.word}: 1,",
-                "get ${fmt.capitalize(env.word)}() {",
+                "get ${fmt.toPascalCase(env.word)}() {",
                 "    return this._${env.word};",
                 "},",
-                "set ${fmt.capitalize(env.word)}(v) {",
+                "set ${fmt.toPascalCase(env.word)}(v) {",
                 "    this._${env.word} = v;",
                 "}`"
             ]
-        },
-        {
-            "trigger": "log",
-            "description": "插入带文件信息的 console.log",
-            "type": "function",
-            "snippet": "(env, { fmt }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
         }
     ]
 }

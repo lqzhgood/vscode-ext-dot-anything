@@ -14,21 +14,21 @@ Press `.` to transform text into anything.
 {
     "dot-anything.rules": [
         {
-            "trigger": "AABB",
+            "trigger": "upper",
             "description": "To UPPER_CASE",
-            "snippet": "#word^AABB#"
+            "snippet": "#word^toUpperCase#"
         }
     ]
 }
 ```
 
-Type `helloWorld.` → select `AABB` → get `HELLOWORLD`
+Type `helloWorld.` → select `upper` → get `HELLOWORLD`
 
 ## How It Works
 
 1. Type any text (e.g., `helloWorld`)
 2. Type `.` to trigger completion
-3. Select a rule (e.g., `AABB`)
+3. Select a rule (e.g., `upper`)
 4. Text is replaced automatically
 
 ## Configuration
@@ -65,19 +65,20 @@ Configure `dot-anything.rules` in VS Code settings.
 | `lineText`        | Current line text          |
 | `workspaceFolder` | Workspace folder path      |
 
-**Placeholder:** `#variable^format#`
+**Placeholder:** `#variable^formatFunction#`
 
-| Description | text Mode      | function Mode      | Input         | Output        |
-| ----------- | -------------- | ------------------ | ------------- | ------------- |
-| Raw value   | `#word#`       | `fmt.raw`          | `helloWorld`  | `helloWorld`  |
-| lowercase   | `#word^aabb#`  | `fmt.toLowerCase`  | `helloWorld`  | `helloworld`  |
-| UPPERCASE   | `#word^AABB#`  | `fmt.toUpperCase`  | `helloWorld`  | `HELLOWORLD`  |
-| Capitalize  | `#word^Aa bb#` | `fmt.capitalize`   | `hello World` | `Hello world` |
-| Title Case  | `#word^Aa Bb#` | `fmt.titleCase`    | `hello world` | `Hello World` |
-| kebab-case  | `#word^aa-bb#` | `fmt.toKebabCase`  | `helloWorld`  | `hello-world` |
-| snake_case  | `#word^aa_bb#` | `fmt.toSnakeCase`  | `helloWorld`  | `hello_world` |
-| camelCase   | `#word^aaBb#`  | `fmt.toCamelCase`  | `hello-world` | `helloWorld`  |
-| PascalCase  | `#word^AaBb#`  | `fmt.toPascalCase` | `hello-world` | `HelloWorld`  |
+| Description | text Mode | function Mode | Example |
+| ----------- | --------- | ------------- | ------- |
+| Keep original value | `#word#` | `fmt.raw` | `helloWorld` → `helloWorld` |
+| Convert all letters to lowercase | `#word^toLowerCase#` | `fmt.toLowerCase` | `HELLO WORLD` → `hello world`<br>`HELLOWORLD` → `helloworld` |
+| Convert all letters to uppercase | `#word^toUpperCase#` | `fmt.toUpperCase` | `hello world` → `HELLO WORLD`<br>`helloworld` → `HELLOWORLD` |
+| Capitalize first letter only | `#word^toUpperCaseFirst#` | `fmt.toUpperCaseFirst` | `hello world` → `Hello world`<br>`helloworld` → `Helloworld` |
+| Capitalize first letter, lowercase rest | `#word^toCapitalize#` | `fmt.toCapitalize` | `hello World` → `Hello world`<br>`helloWorld` → `Helloworld` |
+| Capitalize first letter of each word | `#word^toTitleCase#` | `fmt.toTitleCase` | `hello world` → `Hello World`<br>`helloWorld` → `Helloworld` |
+| Words joined with `-`, all lowercase | `#word^toKebabCase#` | `fmt.toKebabCase` | `HelloWorld` → `hello-world`<br>`Helloworld` → `helloworld` |
+| Words joined with `_`, all lowercase | `#word^toSnakeCase#` | `fmt.toSnakeCase` | `HelloWorld` → `hello_world`<br>`Helloworld` → `helloworld` |
+| First word lowercase, subsequent words capitalized | `#word^toCamelCase#` | `fmt.toCamelCase` | `hello-world` → `helloWorld`<br>`Helloworld` → `helloworld` |
+| Each word capitalized, no separator | `#word^toPascalCase#` | `fmt.toPascalCase` | `hello-world` → `HelloWorld`<br>`helloworld` → `Helloworld` |
 
 ### text Type (Default)
 
@@ -147,10 +148,10 @@ set Abc(v) {
             "snippet": [
                 "(env, { fmt }) => `\\",
                 "_${env.word}: 1,",
-                "get ${fmt.capitalize(env.word)}() {",
+                "get ${fmt.toPascalCase(env.word)}() {",
                 "    return this._${env.word};",
                 "},",
-                "set ${fmt.capitalize(env.word)}(v) {",
+                "set ${fmt.toPascalCase(env.word)}(v) {",
                 "    this._${env.word} = v;",
                 "}`"
             ]
@@ -185,29 +186,54 @@ Full list: [VS Code Language Identifiers](https://code.visualstudio.com/docs/lan
     "dot-anything.rules": [
         // text mode
         {
-            "trigger": "aabb",
-            "description": "Convert to lowercase",
-            "snippet": "#word^aabb#"
+            "trigger": "raw",
+            "description": "Keep original value\nExample: helloWorld → helloWorld",
+            "snippet": "#word#"
         },
         {
-            "trigger": "AABB",
-            "description": "Convert to uppercase",
-            "snippet": "#word^AABB#"
+            "trigger": "toLowerCase",
+            "description": "Convert all letters to lowercase\nExample: HELLO WORLD → hello world\nExample: HELLOWORLD → helloworld",
+            "snippet": "#word^toLowerCase#"
         },
         {
-            "trigger": "aa_bb",
-            "description": "Convert to snake_case",
-            "snippet": "#word^aa_bb#"
+            "trigger": "toUpperCase",
+            "description": "Convert all letters to uppercase\nExample: hello world → HELLO WORLD\nExample: helloworld → HELLOWORLD",
+            "snippet": "#word^toUpperCase#"
         },
         {
-            "trigger": "aaBb",
-            "description": "Convert to camelCase",
-            "snippet": "#word^aaBb#"
+            "trigger": "toUpperCaseFirst",
+            "description": "Capitalize first letter only\nExample: hello world → Hello world\nExample: helloworld → Helloworld",
+            "snippet": "#word^toUpperCaseFirst#"
         },
         {
-            "trigger": "AaBb",
-            "description": "Convert to PascalCase",
-            "snippet": "#word^AaBb#"
+            "trigger": "toCapitalize",
+            "description": "Capitalize first letter, lowercase rest\nExample: hello World → Hello world\nExample: helloWorld → Helloworld",
+            "snippet": "#word^toCapitalize#"
+        },
+        {
+            "trigger": "toTitleCase",
+            "description": "Capitalize first letter of each word\nExample: hello world → Hello World\nExample: helloWorld → Helloworld",
+            "snippet": "#word^toTitleCase#"
+        },
+        {
+            "trigger": "toKebabCase",
+            "description": "Words joined with `-`, all lowercase\nExample: HelloWorld → hello-world\nExample: Helloworld → helloworld",
+            "snippet": "#word^toKebabCase#"
+        },
+        {
+            "trigger": "toSnakeCase",
+            "description": "Words joined with `_`, all lowercase\nExample: HelloWorld → hello_world\nExample: Helloworld → helloworld",
+            "snippet": "#word^toSnakeCase#"
+        },
+        {
+            "trigger": "toCamelCase",
+            "description": "First word lowercase, subsequent words capitalized\nExample: hello-world → helloWorld\nExample: Helloworld → helloworld",
+            "snippet": "#word^toCamelCase#"
+        },
+        {
+            "trigger": "toPascalCase",
+            "description": "Each word capitalized, no separator\nExample: hello-world → HelloWorld\nExample: helloworld → Helloworld",
+            "snippet": "#word^toPascalCase#"
         },
         {
             "trigger": "func",
@@ -227,10 +253,10 @@ Full list: [VS Code Language Identifiers](https://code.visualstudio.com/docs/lan
             "snippet": [
                 "(env, { fmt }) => `\\",
                 "_${env.word}: 1,",
-                "get ${fmt.capitalize(env.word)}() {",
+                "get ${fmt.toPascalCase(env.word)}() {",
                 "    return this._${env.word};",
                 "},",
-                "set ${fmt.capitalize(env.word)}(v) {",
+                "set ${fmt.toPascalCase(env.word)}(v) {",
                 "    this._${env.word} = v;",
                 "}`"
             ]
