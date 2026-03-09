@@ -68,14 +68,15 @@ class ConfigCache {
         const userFns = this.getConfig<UserFn[]>('fns', []);
 
         // 用户函数转换为 quickRules 格式
-        const userQuickRules: QuickRule[] = userFns.map(userFn => ({
-            name: userFn.name,
-            makeKey: (k: string) => '#' + k + '^' + userFn.name + '#',
-            makeValue: (s: string, ctx: { fns: Record<string, any> }) => {
-                const fn = new Function(`return (${userFn.fn})`)();
-                return fn(s, ctx);
-            },
-        }));
+        const userQuickRules: QuickRule[] = userFns.map(userFn => {
+            const fn = new Function(`return (${userFn.fn})`)();
+
+            return {
+                name: userFn.name,
+                makeKey: (k: string) => '#' + k + '^' + userFn.name + '#',
+                makeValue: fn,
+            };
+        });
 
         // 合并：用户配置优先（同名覆盖）
         const ruleMap = new Map<string, QuickRule>();

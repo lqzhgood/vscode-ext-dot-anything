@@ -272,6 +272,77 @@ set Abc(v) {
 }
 ```
 
+## 自定义函数
+
+通过 `dot-anything.fns` 配置自定义格式化函数，可在 text 和 function 模式中使用。
+
+**配置示例：**
+
+```json
+{
+    "dot-anything.fns": [
+        {
+            "name": "prefix",
+            "fn": "(s) => 'prefix_' + s"
+        },
+        {
+            "name": "wrap",
+            "fn": "(s, { fns }) => `{{${fns.toUpperCase(s)}}}`"
+        }
+    ]
+}
+```
+
+### text 模式使用
+
+```json
+{
+    "dot-anything.rules": [
+        {
+            "trigger": "prefix",
+            "description": "添加前缀",
+            "snippet": "#word^prefix#"
+        }
+    ]
+}
+```
+
+输入 `hello.prefix` → 得到 `prefix_hello`
+
+### function 模式使用
+
+```json
+{
+    "dot-anything.rules": [
+        {
+            "trigger": "hook",
+            "type": "function",
+            "description": "生成 React Hook 名称",
+            "snippet": "(env, o) => o.fns.reactHook(env.word, o)"
+        }
+    ],
+    "dot-anything.fns": [
+        {
+            "name": "reactHook",
+            "fn": "(s, { fns }) => `use${fns.toUpperCaseFirst(s)}`"
+        }
+    ]
+}
+```
+
+输入 `state.hook` → 得到 `useState`
+
+**注意：** 在 function 模式中调用自定义函数时，需要透传第二个参数 `o`（包含 `fns`），否则自定义函数内部无法访问内置格式化函数。
+
+**函数参数：**
+
+| 参数  | 说明                                   |
+| ----- | -------------------------------------- |
+| `s`   | 输入字符串                             |
+| `fns` | 内置格式化函数（如 `fns.toUpperCase`） |
+
+**注意：** 自定义函数会覆盖同名内置函数。
+
 ## 调试模式
 
 ```json

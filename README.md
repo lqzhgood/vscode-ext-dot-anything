@@ -271,6 +271,77 @@ Full list: [VS Code Language Identifiers](https://code.visualstudio.com/docs/lan
 }
 ```
 
+## Custom Functions
+
+Configure custom formatting functions via `dot-anything.fns`, available in both text and function modes.
+
+**Configuration Example:**
+
+```json
+{
+    "dot-anything.fns": [
+        {
+            "name": "prefix",
+            "fn": "(s) => 'prefix_' + s"
+        },
+        {
+            "name": "wrap",
+            "fn": "(s, { fns }) => `{{${fns.toUpperCase(s)}}}`"
+        }
+    ]
+}
+```
+
+### text Mode Usage
+
+```json
+{
+    "dot-anything.rules": [
+        {
+            "trigger": "prefix",
+            "description": "Add prefix",
+            "snippet": "#word^prefix#"
+        }
+    ]
+}
+```
+
+Type `hello.prefix` → get `prefix_hello`
+
+### function Mode Usage
+
+```json
+{
+    "dot-anything.rules": [
+        {
+            "trigger": "hook",
+            "type": "function",
+            "description": "Generate React Hook name",
+            "snippet": "(env, o) => o.fns.reactHook(env.word, o)"
+        }
+    ],
+    "dot-anything.fns": [
+        {
+            "name": "reactHook",
+            "fn": "(s, { fns }) => `use${fns.toUpperCaseFirst(s)}`"
+        }
+    ]
+}
+```
+
+Type `state.hook` → get `useState`
+
+**Note:** When calling custom functions in function mode, you must pass through the second parameter `o` (containing `fns`), otherwise the custom function cannot access built-in formatting functions internally.
+
+**Function Parameters:**
+
+| Parameter | Description                                    |
+| --------- | ---------------------------------------------- |
+| `s`       | Input string                                   |
+| `fns`     | Built-in formatting functions (e.g., `fns.toUpperCase`) |
+
+**Note:** Custom functions override built-in functions with the same name.
+
 ## Debug Mode
 
 ```json

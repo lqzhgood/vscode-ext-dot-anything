@@ -42,8 +42,6 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
                 const lineText = document.lineAt(position).text;
                 const textBeforeCursor = lineText.slice(0, position.character);
 
-                LOG.dev('triggered, textBeforeCursor: ', textBeforeCursor);
-
                 // 匹配 `.` 前的输入词，如 `abc.` 中的 `abc`
                 const match = textBeforeCursor.match(/(\S+)\.$/);
                 if (!match) {
@@ -54,9 +52,6 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
                 const word = match[1];
                 const languageId = document.languageId;
                 const rules = getRules();
-                LOG.dev(
-                    `input="${word}", languageId="${languageId}", rules=${rules.length}`,
-                );
 
                 // 构建环境变量
                 const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -96,8 +91,6 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
                         LOG.err(`rule "${rule.trigger}" error: ${err}`);
                         continue;
                     }
-
-                    LOG.dev(`rule "${rule.trigger}" → "${result}"`);
 
                     const item = new vscode.CompletionItem(
                         rule.trigger,
