@@ -40,6 +40,10 @@ class Logger {
             this.log('[DEV] ', ...args);
         }
     }
+
+    err(...args: any[]) {
+        this.log('[ERROR] ', ...args);
+    }
 }
 
 export const LOG = new Logger();

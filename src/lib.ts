@@ -1,152 +1,148 @@
 import * as vscode from 'vscode';
-import { EnvVars, Rule } from './types';
+import { EnvVars, InnerRule, QuickRule, Rule, UserFn } from './types';
 import { WORKSPACE } from './const';
+import { baseQuickRules } from './rules';
 
-export function toLowerCase(str = '') {
-    return str.toLowerCase();
-}
+class ConfigCache {
+    private quickRules: QuickRule[] | null = null;
+    private fns: Record<string, any> | null = null;
+    private rules: InnerRule[] | null = null;
 
-export function toUpperCase(str = '') {
-    return str.toUpperCase();
-}
+    clear(): void {
+        this.quickRules = null;
+        this.fns = null;
+        this.rules = null;
+    }
 
-export function toUpperCaseFirst(str = '') {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
+    getConfig<T>(key: string, defaultValue: T) {
+        const config = vscode.workspace.getConfiguration(WORKSPACE);
+        return config.get<T>(key) ?? defaultValue;
+    }
 
-export function toCapitalize(str = '') {
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-}
+    getRules(): InnerRule[] {
+        if (!this.rules) {
+            this.rules = this.getConfig<Rule[]>('rules', []).map(v => {
+                const r = {
+                    fileType: v.fileType ?? '*',
+                    type: v.type ?? 'text',
+                    trigger: v.trigger,
+                    description: v.description,
+                    snippetStr: Array.isArray(v.snippet)
+                        ? v.snippet.join('\n')
+                        : v.snippet,
+                    fn: undefined,
+                };
 
-export function toTitleCase(str = '') {
-    return str
-        .toLowerCase()
-        .split(/(\s+)/)
-        .map(t =>
-            t.trim() === '' ? t : t.charAt(0).toUpperCase() + t.slice(1),
-        )
-        .join('');
-}
+                if (r.type === 'function') {
+                    r.fn = new Function(`return (${r.snippetStr})`)();
+                }
 
-export function toKebabCase(str = '') {
-    return str
-        .replace(/([a-z])([A-Z])/g, '$1-$2')
-        .replace(/[\s_]+/g, '-')
-        .toLowerCase()
-        .replace(/^-+|-+$/g, '');
-}
+                return r;
+            });
+        }
+        return this.rules;
+    }
 
-export function toSnakeCase(str = '') {
-    return str
-        .replace(/([a-z])([A-Z])/g, '$1_$2')
-        .replace(/[\s-]+/g, '_')
-        .toLowerCase()
-        .replace(/^_+|_+$/g, '');
-}
+    getFns(): Record<string, any> {
+        if (!this.fns) {
+            const quickRules = this.getQuickRules();
+            this.fns = quickRules.reduce(
+                (pre, cV) => {
+                    pre[cV.name] = cV.makeValue;
+                    return pre;
+                },
+                {} as Record<string, any>,
+            );
+        }
+        return this.fns;
+    }
 
-export function toCamelCase(str = '') {
-    return str
-        .toLowerCase()
-        .split(/[\s-_]+/)
-        .map((w, i) => (i === 0 ? w : w.charAt(0).toUpperCase() + w.slice(1)))
-        .join('');
-}
+    getQuickRules(): QuickRule[] {
+        if (!this.quickRules) {
+            this.quickRules = this.buildQuickRules();
+        }
+        return this.quickRules;
+    }
 
-export function toPascalCase(str = '') {
-    return str
-        .toLowerCase()
-        .split(/[\s-_]+/)
-        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-        .join('');
-}
+    private buildQuickRules(): QuickRule[] {
+        const userFns = this.getConfig<UserFn[]>('fns', []);
 
-export const quickRules = [
-    {
-        name: 'raw',
-        makeKey: (k: string) => '#' + k + '#',
-        makeValue: (v: string) => v,
-    },
-    {
-        name: 'toLowerCase',
-        makeKey: (k: string) => '#' + k + '^toLowerCase#',
-        makeValue: toLowerCase,
-    },
-    {
-        name: 'toUpperCase',
-        makeKey: (k: string) => '#' + k + '^toUpperCase#',
-        makeValue: toUpperCase,
-    },
-    {
-        name: 'toUpperCaseFirst',
-        makeKey: (k: string) => '#' + k + '^toUpperCaseFirst#',
-        makeValue: toUpperCaseFirst,
-    },
-    {
-        name: 'toCapitalize',
-        makeKey: (k: string) => '#' + k + '^toCapitalize#',
-        makeValue: toCapitalize,
-    },
-    {
-        name: 'toTitleCase',
-        makeKey: (k: string) => '#' + k + '^toTitleCase#',
-        makeValue: toTitleCase,
-    },
-    {
-        name: 'toKebabCase',
-        makeKey: (k: string) => '#' + k + '^toKebabCase#',
-        makeValue: toKebabCase,
-    },
-    {
-        name: 'toSnakeCase',
-        makeKey: (k: string) => '#' + k + '^toSnakeCase#',
-        makeValue: toSnakeCase,
-    },
-    {
-        name: 'toCamelCase',
-        makeKey: (k: string) => '#' + k + '^toCamelCase#',
-        makeValue: toCamelCase,
-    },
-    {
-        name: 'toPascalCase',
-        makeKey: (k: string) => '#' + k + '^toPascalCase#',
-        makeValue: toPascalCase,
-    },
-];
+        // 用户函数转换为 quickRules 格式
+        const userQuickRules: QuickRule[] = userFns.map(userFn => ({
+            name: userFn.name,
+            makeKey: (k: string) => '#' + k + '^' + userFn.name + '#',
+            makeValue: (s: string, ctx: { fns: Record<string, any> }) => {
+                const fn = new Function(`return (${userFn.fn})`)();
+                return fn(s, ctx);
+            },
+        }));
 
-const fns = quickRules.reduce(
-    (pre, cV) => {
-        pre[cV.name] = cV.makeValue;
+        // 合并：用户配置优先（同名覆盖）
+        const ruleMap = new Map<string, QuickRule>();
 
-        return pre;
-    },
-    {} as Record<string, any>,
-);
+        // 先添加内置规则
+        for (const rule of baseQuickRules) {
+            ruleMap.set(rule.name, rule);
+        }
 
-export function getRules(): Rule[] {
-    const config = vscode.workspace.getConfiguration(WORKSPACE);
-    return config.get<Rule[]>('rules') ?? [];
-}
+        // 用户规则覆盖同名内置规则
+        for (const rule of userQuickRules) {
+            ruleMap.set(rule.name, rule);
+        }
 
-export function applyFormat(rule: Rule, keyWords: EnvVars): string {
-    const type = rule.type ?? 'text';
-    const snippetStr = Array.isArray(rule.snippet)
-        ? rule.snippet.join('\n')
-        : rule.snippet;
-
-    if (type === 'function') {
-        // format 是一个箭头函数字符串，执行后传入 $input 等参数
-        const fn = new Function(`return (${snippetStr})`)();
-        return fn(keyWords, { fns });
-    } else {
-        return Object.entries(keyWords).reduce((pre, [key, value]) => {
-            return quickRules.reduce((iPre, { makeKey, makeValue }) => {
-                return iPre.replaceAll(makeKey(key), makeValue(value));
-            }, pre);
-        }, snippetStr);
+        return Array.from(ruleMap.values());
     }
 }
 
-export function isRuleApplicable(rule: Rule, languageId: string): boolean {
+const configCache = new ConfigCache();
+
+export function clearCache(): void {
+    configCache.clear();
+}
+
+export function getRules() {
+    return configCache.getRules();
+}
+
+export function getQuickRules(): QuickRule[] {
+    return configCache.getQuickRules();
+}
+
+export function getFns(): Record<string, any> {
+    return configCache.getFns();
+}
+
+export function applyFormat(rule: InnerRule, EnvVars: EnvVars): string {
+    const type = rule.type;
+
+    // 使用缓存的 fns 和 quickRules
+    const fns = getFns();
+    const quickRules = getQuickRules();
+
+    if (type === 'function') {
+        return rule.fn!(EnvVars, { fns });
+    } else {
+        let result = rule.snippetStr;
+        for (const [key, value] of Object.entries(EnvVars)) {
+            result = result.replaceAll(`#${key}#`, value);
+
+            // 优化：如果 snippet 中没有 #key#，则跳过该 key 所有扩展符替换
+            if (!result.includes(`#${key}^`)) {
+                continue;
+            }
+
+            for (const { makeKey, makeValue } of quickRules) {
+                result = result.replaceAll(
+                    makeKey(key),
+                    makeValue(value, { fns }),
+                );
+            }
+        }
+        return result;
+    }
+}
+
+export function isRuleApplicable(rule: InnerRule, languageId: string): boolean {
     const fileType = rule.fileType;
     if (!fileType || fileType.length === 0) {
         // 未配置 fileType 时不限制语言

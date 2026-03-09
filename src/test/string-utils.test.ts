@@ -9,7 +9,7 @@ import {
     toSnakeCase,
     toCamelCase,
     toPascalCase,
-} from '../lib';
+} from '../rules';
 
 suite('String Utils Test Suite', () => {
     suite('toLowerCase', () => {

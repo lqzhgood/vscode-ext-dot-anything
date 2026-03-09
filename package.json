@@ -210,6 +210,25 @@
                             }
                         }
                     }
+                },
+                "dot-anything.fns": {
+                    "type": "array",
+                    "description": "Custom functions for rules",
+                    "default": [],
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "Function name"
+                            },
+                            "fn": {
+                                "type": "string",
+                                "description": "Arrow function string, e.g. (s='', { fns }) => `use${fns.toUpperCase(s)}`"
+                            }
+                        },
+                        "required": ["name", "fn"]
+                    }
                 }
             }
         }

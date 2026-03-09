@@ -2,14 +2,14 @@ import * as vscode from 'vscode';
 import { EnvVars } from './types';
 import path from 'path';
 import { getSingleChannel, LOG } from './utils';
-import { applyFormat, getRules, isRuleApplicable } from './lib';
+import { applyFormat, clearCache, getRules, isRuleApplicable } from './lib';
 import { WORKSPACE } from './const';
 
 // debug
 export function activate(context: vscode.ExtensionContext) {
     const out = getSingleChannel();
     LOG.info('[activate] extension activated');
-    LOG.info('[activate] rules: ' + JSON.stringify(getRules()));
+    // LOG.info('[activate] rules: ' + JSON.stringify(getRules()));
 
     // 监听配置变化，重新注册 provider
     let disposable = registerProvider(out);
@@ -17,7 +17,11 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration(e => {
-            if (e.affectsConfiguration(`${WORKSPACE}.rules`)) {
+            if (
+                e.affectsConfiguration(`${WORKSPACE}.rules`) ||
+                e.affectsConfiguration(`${WORKSPACE}.fns`)
+            ) {
+                clearCache();
                 disposable.dispose();
                 disposable = registerProvider(out);
                 context.subscriptions.push(disposable);
@@ -89,7 +93,7 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
                     try {
                         result = applyFormat(rule, envVars);
                     } catch (err) {
-                        LOG.dev(`rule "${rule.trigger}" error: ${err}`);
+                        LOG.err(`rule "${rule.trigger}" error: ${err}`);
                         continue;
                     }
 
