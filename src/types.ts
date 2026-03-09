@@ -11,13 +11,10 @@ export interface Rule {
     snippet: string | string[];
 }
 
-export interface InnerRule {
+export interface InnerRule extends Omit<Rule, 'type' | 'snippet'> {
     type: 'function' | 'text';
-    fileType?: string | string[];
-    trigger: string;
-    description?: string;
     snippetStr: string;
-    fn?: (EnvVars: EnvVars, o: any) => string;
+    fn?: (envVars: EnvVars, ctx: { fns: Record<string, any> }) => string;
 }
 
 export type EnvVars = {

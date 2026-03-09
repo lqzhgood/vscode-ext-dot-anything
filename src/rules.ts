@@ -1,3 +1,5 @@
+import { QuickRule } from './types';
+
 export function toLowerCase(str = '') {
     return str.toLowerCase();
 }
@@ -56,50 +58,26 @@ export function toPascalCase(str = '') {
         .join('');
 }
 
-export const baseQuickRules = [
-    {
-        name: 'toLowerCase',
-        makeKey: (k: string) => '#' + k + '^toLowerCase#',
-        makeValue: toLowerCase,
-    },
-    {
-        name: 'toUpperCase',
-        makeKey: (k: string) => '#' + k + '^toUpperCase#',
-        makeValue: toUpperCase,
-    },
-    {
-        name: 'toUpperCaseFirst',
-        makeKey: (k: string) => '#' + k + '^toUpperCaseFirst#',
-        makeValue: toUpperCaseFirst,
-    },
-    {
-        name: 'toCapitalize',
-        makeKey: (k: string) => '#' + k + '^toCapitalize#',
-        makeValue: toCapitalize,
-    },
-    {
-        name: 'toTitleCase',
-        makeKey: (k: string) => '#' + k + '^toTitleCase#',
-        makeValue: toTitleCase,
-    },
-    {
-        name: 'toKebabCase',
-        makeKey: (k: string) => '#' + k + '^toKebabCase#',
-        makeValue: toKebabCase,
-    },
-    {
-        name: 'toSnakeCase',
-        makeKey: (k: string) => '#' + k + '^toSnakeCase#',
-        makeValue: toSnakeCase,
-    },
-    {
-        name: 'toCamelCase',
-        makeKey: (k: string) => '#' + k + '^toCamelCase#',
-        makeValue: toCamelCase,
-    },
-    {
-        name: 'toPascalCase',
-        makeKey: (k: string) => '#' + k + '^toPascalCase#',
-        makeValue: toPascalCase,
-    },
+// 工厂函数：创建 QuickRule
+function createQuickRule(
+    name: string,
+    makeValue: (s: string, ctx: { fns: Record<string, any> }) => string,
+): QuickRule {
+    return {
+        name,
+        makeKey: (k: string) => `#${k}^${name}#`,
+        makeValue,
+    };
+}
+
+export const baseQuickRules: QuickRule[] = [
+    createQuickRule('toLowerCase', toLowerCase),
+    createQuickRule('toUpperCase', toUpperCase),
+    createQuickRule('toUpperCaseFirst', toUpperCaseFirst),
+    createQuickRule('toCapitalize', toCapitalize),
+    createQuickRule('toTitleCase', toTitleCase),
+    createQuickRule('toKebabCase', toKebabCase),
+    createQuickRule('toSnakeCase', toSnakeCase),
+    createQuickRule('toCamelCase', toCamelCase),
+    createQuickRule('toPascalCase', toPascalCase),
 ];

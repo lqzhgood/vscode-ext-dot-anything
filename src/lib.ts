@@ -112,7 +112,7 @@ export function getFns(): Record<string, any> {
     return configCache.getFns();
 }
 
-export function applyFormat(rule: InnerRule, EnvVars: EnvVars): string {
+export function applyFormat(rule: InnerRule, envVars: EnvVars): string {
     const type = rule.type;
 
     // 使用缓存的 fns 和 quickRules
@@ -120,13 +120,13 @@ export function applyFormat(rule: InnerRule, EnvVars: EnvVars): string {
     const quickRules = getQuickRules();
 
     if (type === 'function') {
-        return rule.fn!(EnvVars, { fns });
+        return rule.fn!(envVars, { fns });
     } else {
         let result = rule.snippetStr;
-        for (const [key, value] of Object.entries(EnvVars)) {
+        for (const [key, value] of Object.entries(envVars)) {
             result = result.replaceAll(`#${key}#`, value);
 
-            // 优化：如果 snippet 中没有 #key#，则跳过该 key 所有扩展符替换
+            // 优化：如果 snippet 中没有 #key^，则跳过该 key 所有扩展符替换
             if (!result.includes(`#${key}^`)) {
                 continue;
             }

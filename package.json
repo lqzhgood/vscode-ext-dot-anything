@@ -65,7 +65,7 @@
     "license": "SEE LICENSE IN LICENSE.txt",
     "bugs": {
         "url": "https://github.com/lqzhgood/vscode-ext-dot-anything/issues",
-        "email": "sean@contoso.com"
+        "email": "i@lqzh.me"
     },
     "repository": {
         "type": "git",
@@ -137,7 +137,6 @@
                                                 "objective-c",
                                                 "objective-cpp",
                                                 "ocaml",
-                                                "pascal",
                                                 "perl",
                                                 "perl6",
                                                 "php",
