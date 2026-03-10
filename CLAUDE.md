@@ -46,9 +46,11 @@ This is a VS Code extension ("dot-anything") that provides dot-triggered complet
 **Key files**:
 
 - `src/extension.ts` — `activate()` registers `CompletionItemProvider` triggered by `.`
-- `src/lib.ts` — Core logic: `getRules()`, `applyFormat()`, `isRuleApplicable()`, and `quickRules` for format conversions
-- `src/types.ts` — `Rule` and `EnvVars` interfaces
+- `src/lib.ts` — Core logic: `getRules()`, `applyFormat()`, `isRuleApplicable()`, and `ConfigCache` class for caching configuration
+- `src/rules.ts` — Built-in format functions (`toLowerCase`, `toCamelCase`, etc.) exported as `baseQuickRules`
+- `src/types.ts` — `Rule`, `InnerRule`, `EnvVars`, `QuickRule`, and `UserFn` interfaces
 - `src/utils.ts` — `Logger` class with `info()` (always logs) and `dev()` (logs only when `dot-anything.debug` is true)
+- `src/const.ts` — `WORKSPACE` constant (`'dot-anything'`)
 
 **Rule processing flow**:
 
@@ -57,10 +59,12 @@ This is a VS Code extension ("dot-anything") that provides dot-triggered complet
 3. For each rule in `dot-anything.rules`:
     - Check `fileType` filter via `isRuleApplicable()`
     - Apply format via `applyFormat()`:
-        - `text` type: Replace `#placeholder^format#` patterns (e.g., `#word^AABB#` → uppercase)
+        - `text` type: Replace `#placeholder^format#` patterns (e.g., `#word^toUpperCase#` → uppercase)
         - `function` type: Execute snippet as JS arrow function with `(env, { fns })` params
 4. Return completion items with transformed results
 
-**Format suffixes** (text mode): `#word#` (raw), `^aabb` (lower), `^AABB` (upper), `^aa-bb` (kebab), `^aa_bb` (snake), `^aaBb` (camel), `^AaBb` (pascal), `^Aa bb` (capitalize), `^Aa Bb` (title)
+**Format suffixes** (text mode): `#word#` (raw), `^toLowerCase` (lower), `^toUpperCase` (upper), `^toKebabCase` (kebab), `^toSnakeCase` (snake), `^toCamelCase` (camel), `^toPascalCase` (pascal), `^toUpperCaseFirst` (capitalize first), `^toCapitalize` (capitalize first + lower rest), `^toTitleCase` (title)
 
-**Dependencies**: `string-utils-lite` provides case conversion functions used in `lib.ts`.
+**Custom functions**: Users can define custom functions via `dot-anything.fns` setting. These override built-in functions with the same name. Custom functions receive `(s, { fns })` where `fns` provides access to built-in formatters.
+
+**Configuration caching**: `ConfigCache` class in `lib.ts` caches rules, quickRules, and fns. Cache is cleared when `dot-anything.rules` or `dot-anything.fns` configuration changes.
