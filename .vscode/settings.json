@@ -9,5 +9,218 @@
         "dist": true // set this to false to include "dist" folder in search results
     },
     // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
-    "typescript.tsc.autoDetect": "off"
+    "typescript.tsc.autoDetect": "off",
+
+    // ========================================
+    // dot-anything 测试配置
+    // ========================================
+    "dot-anything.rules": [
+        // ========== text 类型规则测试 ==========
+        // 基础文本替换
+        {
+            "trigger": "log",
+            "description": "console.log with word",
+            "snippet": "console.log('#word#');"
+        },
+        // 多行 snippet
+        {
+            "trigger": "if",
+            "description": "if statement",
+            "snippet": [
+                "if (#word#) {",
+                "    #✏️1#",
+                "}"
+            ]
+        },
+        // 格式化后缀测试
+        {
+            "trigger": "upper",
+            "description": "uppercase word",
+            "snippet": "#word^toUpperCase#"
+        },
+        {
+            "trigger": "lower",
+            "description": "lowercase word",
+            "snippet": "#word^toLowerCase#"
+        },
+        {
+            "trigger": "camel",
+            "description": "camelCase word",
+            "snippet": "#word^toCamelCase#"
+        },
+        {
+            "trigger": "pascal",
+            "description": "PascalCase word",
+            "snippet": "#word^toPascalCase#"
+        },
+        {
+            "trigger": "kebab",
+            "description": "kebab-case word",
+            "snippet": "#word^toKebabCase#"
+        },
+        {
+            "trigger": "snake",
+            "description": "snake_case word",
+            "snippet": "#word^toSnakeCase#"
+        },
+        {
+            "trigger": "capitalize",
+            "description": "Capitalize word",
+            "snippet": "#word^toCapitalize#"
+        },
+        {
+            "trigger": "title",
+            "description": "Title Case word",
+            "snippet": "#word^toTitleCase#"
+        },
+        {
+            "trigger": "upperFirst",
+            "description": "Uppercase first letter",
+            "snippet": "#word^toUpperCaseFirst#"
+        },
+        // 多个占位符
+        {
+            "trigger": "multi",
+            "description": "multiple placeholders",
+            "snippet": "#word# -> #word^toUpperCase# -> #word^toCamelCase#"
+        },
+        // 环境变量测试
+        {
+            "trigger": "file",
+            "description": "file info",
+            "snippet": "File: #fileName#, Ext: #fileExt#, Lang: #languageId#"
+        },
+        {
+            "trigger": "path",
+            "description": "path info",
+            "snippet": "Path: #filePath#, Dir: #fileDir#"
+        },
+        {
+            "trigger": "pos",
+            "description": "position info",
+            "snippet": "Line: #lineNumber#, Col: #column#"
+        },
+        // fileType 过滤测试
+        {
+            "trigger": "js",
+            "description": "JavaScript only",
+            "fileType": ["javascript", "typescript"],
+            "snippet": "// JS: #word#"
+        },
+        {
+            "trigger": "py",
+            "description": "Python only",
+            "fileType": ["python"],
+            "snippet": "# Python: #word#"
+        },
+        {
+            "trigger": "all",
+            "description": "All file types",
+            "fileType": ["*"],
+            "snippet": "Universal: #word#"
+        },
+        // 自定义函数调用
+        {
+            "trigger": "prefix",
+            "description": "custom prefix function",
+            "snippet": "#word^addPrefix#"
+        },
+        {
+            "trigger": "wrap",
+            "description": "custom wrap function",
+            "snippet": "#word^wrap#"
+        },
+
+        // ========== function 类型规则测试 ==========
+        {
+            "trigger": "fn",
+            "description": "function type basic",
+            "type": "function",
+            "snippet": "(env, { fns }) => `function ${fns.toCamelCase(env.word)}() {\\n  return '${env.word}';\\n}`"
+        },
+        {
+            "trigger": "const",
+            "description": "const declaration",
+            "type": "function",
+            "snippet": "(env, { fns }) => `const ${fns.toUpperCase(env.word)} = '${env.word}';`"
+        },
+        {
+            "trigger": "env",
+            "description": "all env vars",
+            "type": "function",
+            "snippet": "(env, { fns }) => `word: ${env.word}, file: ${env.fileName}, lang: ${env.languageId}, line: ${env.lineNumber}`"
+        },
+        // 边界情况测试
+        {
+            "trigger": "empty",
+            "description": "empty snippet",
+            "snippet": ""
+        },
+        {
+            "trigger": "special",
+            "description": "special characters",
+            "snippet": "Special: #word# \\n \\t \\\" \\' \\$"
+        },
+        {
+            "trigger": "chinese",
+            "description": "中文测试",
+            "snippet": "中文: #word#，转换: #word^toUpperCase#"
+        },
+        {
+            "trigger": "emoji",
+            "description": "emoji test",
+            "snippet": "#word# 🎉 ✨ 🚀"
+        },
+        // 光标占位符测试（使用 #✏️# 语法）
+        {
+            "trigger": "cursor",
+            "description": "cursor placeholder",
+            "snippet": "#word#(#✏️1#, #✏️2#)"
+        },
+        {
+            "trigger": "cursorDefault",
+            "description": "cursor with default",
+            "snippet": "#word#(#✏️1-value#, #✏️2-default#)"
+        },
+        {
+            "trigger": "cursorEnd",
+            "description": "cursor at end",
+            "snippet": "#word# = #✏️1#"
+        },
+        // 光标占位符 + 修饰符测试
+        {
+            "trigger": "constDecl",
+            "description": "const declaration with cursor",
+            "snippet": "const #✏️1^toUpperCase-name# = #✏️2-value#;"
+        },
+        {
+            "trigger": "cases",
+            "description": "multiple case transformations",
+            "snippet": "kebab: #✏️1^toKebabCase-name#, camel: #✏️1^toCamelCase#, snake: #✏️1^toSnakeCase#"
+        }
+    ],
+
+    // 自定义函数测试配置
+    "dot-anything.fns": [
+        {
+            "name": "addPrefix",
+            "fn": "(s = '', { fns }) => `prefix_${fns.toLowerCase(s)}`"
+        },
+        {
+            "name": "wrap",
+            "fn": "(s = '', { fns }) => `[${s}]`"
+        },
+        {
+            "name": "toUpperCase",
+            "fn": "(s = '') => `CUSTOM_${s.toUpperCase()}`"
+        },
+        {
+            "name": "double",
+            "fn": "(s = '') => `${s}${s}`"
+        },
+        {
+            "name": "reverse",
+            "fn": "(s = '') => s.split('').reverse().join('')"
+        }
+    ]
 }

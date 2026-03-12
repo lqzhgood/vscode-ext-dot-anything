@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { EnvVars, ParsedSnippet } from './types';
 import path from 'path';
-import { getSingleChannel, LOG } from './utils';
+import { clearDebugCache, getSingleChannel, LOG } from './utils';
 import { applyFormat, clearCache, getRules, isRuleApplicable } from './lib';
 import { WORKSPACE } from './const';
 import {
@@ -27,6 +27,11 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration(e => {
+            // 清除 debug 缓存
+            if (e.affectsConfiguration(`${WORKSPACE}.debug`)) {
+                clearDebugCache();
+            }
+            // 清除规则和函数缓存
             if (
                 e.affectsConfiguration(`${WORKSPACE}.rules`) ||
                 e.affectsConfiguration(`${WORKSPACE}.fns`)

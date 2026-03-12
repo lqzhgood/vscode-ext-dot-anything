@@ -4,6 +4,7 @@ import { WORKSPACE } from './const';
 
 class Logger {
     private channel: vscode.OutputChannel | null = null;
+    private debugCache: boolean | null = null;
 
     getChannel(): vscode.OutputChannel {
         if (!this.channel) {
@@ -14,13 +15,30 @@ class Logger {
     }
 
     private isDebug(): boolean {
-        const config = workspace.getConfiguration(WORKSPACE);
-        return config.get('debug') ?? false;
+        // 使用缓存避免重复读取配置
+        if (this.debugCache === null) {
+            const config = workspace.getConfiguration(WORKSPACE);
+            this.debugCache = config.get('debug') ?? false;
+        }
+        return this.debugCache;
+    }
+
+    // 清除缓存（配置变化时调用）
+    clearDebugCache(): void {
+        this.debugCache = null;
     }
 
     private log(prefix: string, ...args: any[]): void {
         const message = args
-            .map(v => (typeof v === 'string' ? v : JSON.stringify(v)))
+            .map(v => {
+                if (typeof v === 'string') {return v;}
+                try {
+                    return JSON.stringify(v);
+                } catch {
+                    // 处理循环引用或其他序列化错误
+                    return String(v);
+                }
+            })
             .join(' ');
         this.getChannel().appendLine(`[${WORKSPACE}]${prefix}${message}`);
     }
@@ -54,4 +72,9 @@ export const LOG = new Logger();
 
 export function getSingleChannel(): vscode.OutputChannel {
     return LOG.getChannel();
+}
+
+// 清除 debug 缓存（供外部调用）
+export function clearDebugCache(): void {
+    LOG.clearDebugCache();
 }

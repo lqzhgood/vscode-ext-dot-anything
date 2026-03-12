@@ -1,10 +1,21 @@
 import * as vscode from 'vscode';
-import { CursorPlaceholder, ParsedSnippet, PlaceholderRange, SnippetSession } from './types';
+import {
+    CursorPlaceholder,
+    ParsedSnippet,
+    PlaceholderRange,
+    SnippetSession,
+} from './types';
 import { getFns } from './lib';
 import { LOG } from './utils';
 
 // 占位符正则：匹配 #✏️...#
 const PLACEHOLDER_REGEX = /#✏️([^#]*)#/g;
+
+// VS Code snippet 格式正则：${1:default}^modifier 或 ${1}
+const VS_SNIPPET_REGEX = /\$\{(\d+)(?::([^}]*))?\}\^?([a-zA-Z]*)/g;
+
+// 用于 getActualSnippetText 的正则
+const VS_SNIPPET_TEXT_REGEX = /\$\{(\d+)(?::([^}]*))?\}(\^[a-zA-Z]+)?/g;
 
 // 全局会话状态
 let activeSession: SnippetSession | null = null;
@@ -89,40 +100,61 @@ export function parseCursorPlaceholders(snippet: string): ParsedSnippet {
     const placeholders: CursorPlaceholder[] = [];
     let hasPlaceholders = false;
 
-    // 先处理异常格式并记录警告
-    let processedSnippet = snippet.replace(PLACEHOLDER_REGEX, (match, content) => {
-        const normalized = normalizePlaceholder(content);
-        if (normalized.normalized !== match) {
-            LOG.warn(`Placeholder normalized: "${match}" -> "${normalized.normalized}"`);
-        }
-        return normalized.normalized;
-    });
-
-    // 第一遍：收集所有占位符，找出每个索引的第一个 comment
+    // 一次遍历：收集所有占位符信息并规范化
+    const normalizedInfos: Array<{
+        original: string;
+        normalized: string;
+        index: number;
+        modifier?: string;
+        comment?: string;
+    }> = [];
     const indexFirstComment = new Map<number, string>();
 
-    processedSnippet.replace(PLACEHOLDER_REGEX, (match, content) => {
-        hasPlaceholders = true;
-        const { index, modifier, comment } = normalizePlaceholder(content);
+    let processedSnippet = snippet.replace(
+        PLACEHOLDER_REGEX,
+        (match, content) => {
+            hasPlaceholders = true;
+            const info = normalizePlaceholder(content);
 
-        // 记录每个索引的第一个 comment
-        if (!indexFirstComment.has(index) && comment) {
-            indexFirstComment.set(index, comment);
-        }
-        return match; // 不修改，只是收集
-    });
+            // 记录每个索引的第一个 comment
+            if (!indexFirstComment.has(info.index) && info.comment) {
+                indexFirstComment.set(info.index, info.comment);
+            }
+
+            // 记录规范化信息
+            normalizedInfos.push({
+                original: match,
+                normalized: info.normalized,
+                index: info.index,
+                modifier: info.modifier,
+                comment: info.comment,
+            });
+
+            // 记录警告（如果格式被规范化）
+            if (info.normalized !== match) {
+                LOG.warn(
+                    `Placeholder normalized: "${match}" -> "${info.normalized}"`,
+                );
+            }
+
+            return info.normalized;
+        },
+    );
 
     // 第二遍：生成 VS Code snippet 格式，使用第一个 comment 作为默认值
-    processedSnippet = processedSnippet.replace(PLACEHOLDER_REGEX, (match, content) => {
-        const { index, modifier, comment } = normalizePlaceholder(content);
+    let infoIndex = 0;
+    processedSnippet = processedSnippet.replace(PLACEHOLDER_REGEX, match => {
+        const info = normalizedInfos[infoIndex];
+        infoIndex++;
 
         // 使用第一个 comment 作为默认值（确保相同索引的占位符同步）
-        const defaultComment = indexFirstComment.get(index) ?? comment ?? '';
+        const defaultComment =
+            indexFirstComment.get(info.index) ?? info.comment ?? '';
 
         // 记录所有占位符（不去重）
         placeholders.push({
-            index,
-            modifier,
+            index: info.index,
+            modifier: info.modifier,
             comment: defaultComment,
             original: match,
         });
@@ -132,13 +164,13 @@ export function parseCursorPlaceholders(snippet: string): ParsedSnippet {
         // 这样编辑时只选中 comment，modifier 显示在外面作为提示
         let result = '';
         if (defaultComment) {
-            result = `\${${index}:${defaultComment}}`;
+            result = `\${${info.index}:${defaultComment}}`;
         } else {
-            result = `\${${index}}`;
+            result = `\${${info.index}}`;
         }
         // modifier 显示在外面，不参与选中
-        if (modifier) {
-            result += '^' + modifier;
+        if (info.modifier) {
+            result += '^' + info.modifier;
         }
         return result;
     });
@@ -187,19 +219,35 @@ export function applyModifier(text: string, modifier: string): string {
 function calculatePlaceholderPositions(
     vsSnippet: string,
     placeholders: CursorPlaceholder[],
-): { positions: Array<{ start: number; end: number; modifierEnd?: number; modifier?: string; index: number }>; actualText: string } {
-    const positions: Array<{ start: number; end: number; modifierEnd?: number; modifier?: string; index: number }> = [];
+): {
+    positions: Array<{
+        start: number;
+        end: number;
+        modifierEnd?: number;
+        modifier?: string;
+        index: number;
+    }>;
+    actualText: string;
+} {
+    const positions: Array<{
+        start: number;
+        end: number;
+        modifierEnd?: number;
+        modifier?: string;
+        index: number;
+    }> = [];
 
     // 构建实际插入的文本，同时记录每个占位符的位置
     let actualText = '';
     let lastIndex = 0;
 
-    // VS Code snippet 格式: ${1:default} 或 ${1}
-    const vsSnippetRegex = /\$\{(\d+)(?::([^}]*))?\}\^?([a-zA-Z]*)/g;
+    // 重置正则 lastIndex
+    VS_SNIPPET_REGEX.lastIndex = 0;
+
     let match;
     let placeholderIdx = 0;
 
-    while ((match = vsSnippetRegex.exec(vsSnippet)) !== null) {
+    while ((match = VS_SNIPPET_REGEX.exec(vsSnippet)) !== null) {
         // 添加匹配前的普通文本
         actualText += vsSnippet.slice(lastIndex, match.index);
 
@@ -248,15 +296,21 @@ function calculatePlaceholderPositions(
  * 获取 snippet 对应的实际插入文本（不含 ${} 语法，但包含 ^modifier）
  */
 export function getActualSnippetText(vsSnippet: string): string {
+    // 重置正则 lastIndex
+    VS_SNIPPET_TEXT_REGEX.lastIndex = 0;
+
     // VS Code snippet 格式: ${1:default}^modifier 或 ${1}
     // 实际插入的文本会包含 ^modifier 部分
-    return vsSnippet.replace(/\$\{(\d+)(?::([^}]*))?\}(\^[a-zA-Z]+)?/g, (match, index, defaultValue, modifier) => {
-        let result = defaultValue ?? '';
-        if (modifier) {
-            result += modifier;
-        }
-        return result;
-    });
+    return vsSnippet.replace(
+        VS_SNIPPET_TEXT_REGEX,
+        (match, index, defaultValue, modifier) => {
+            let result = defaultValue ?? '';
+            if (modifier) {
+                result += modifier;
+            }
+            return result;
+        },
+    );
 }
 
 /**
@@ -273,7 +327,10 @@ export function startSnippetSession(
     }
 
     // 计算占位符在实际插入文本中的位置
-    const { positions } = calculatePlaceholderPositions(parsed.snippet, parsed.placeholders);
+    const { positions } = calculatePlaceholderPositions(
+        parsed.snippet,
+        parsed.placeholders,
+    );
 
     // 转换为 PlaceholderRange 数组
     const placeholderRanges: PlaceholderRange[] = positions.map(pos => ({
@@ -339,7 +396,9 @@ export function findPlaceholderAtOffset(
         const start = session.insertOffset + placeholder.startOffset;
         // 只检查内容范围，不包含 ^modifier
         const end = session.insertOffset + placeholder.endOffset;
-        LOG.dev(`Checking placeholder ${placeholder.index}: start=${start}, end=${end}, offset=${offset}`);
+        LOG.dev(
+            `Checking placeholder ${placeholder.index}: start=${start}, end=${end}, offset=${offset}`,
+        );
         if (offset >= start && offset <= end) {
             return placeholder;
         }
@@ -356,15 +415,22 @@ export function updatePlaceholderOffsets(
     delta: number,
     changeOffset: number,
 ): void {
-    if (!activeSession) {return;}
+    if (!activeSession) {
+        return;
+    }
 
     // 更新插入位置之后的占位符
     for (const placeholder of activeSession.placeholders) {
-        const placeholderStart = activeSession.insertOffset + placeholder.startOffset;
-        const placeholderEnd = activeSession.insertOffset + placeholder.endOffset;
+        const placeholderStart =
+            activeSession.insertOffset + placeholder.startOffset;
+        const placeholderEnd =
+            activeSession.insertOffset + placeholder.endOffset;
 
         // 如果变化发生在占位符内部，调整 endOffset 和 modifierEndOffset
-        if (changeOffset >= placeholderStart && changeOffset <= placeholderEnd) {
+        if (
+            changeOffset >= placeholderStart &&
+            changeOffset <= placeholderEnd
+        ) {
             placeholder.endOffset += delta;
             if (placeholder.modifierEndOffset !== undefined) {
                 placeholder.modifierEndOffset += delta;
@@ -384,6 +450,120 @@ export function updatePlaceholderOffsets(
 }
 
 /**
+ * 占位符编辑信息
+ */
+interface PlaceholderEdit {
+    startOffset: number;
+    endOffset: number;
+    modifierEndOffset: number;
+    content: string;
+    transformed: string;
+}
+
+/**
+ * 收集需要编辑的占位符
+ */
+function collectPlaceholderEdits(
+    editor: vscode.TextEditor,
+    placeholderIndex: number,
+): PlaceholderEdit[] {
+    if (!activeSession) {
+        return [];
+    }
+
+    const edits: PlaceholderEdit[] = [];
+    const prevPlaceholders = activeSession.placeholders.filter(
+        p => p.index === placeholderIndex,
+    );
+
+    // 按从后往前的顺序处理，避免偏移问题
+    prevPlaceholders.sort((a, b) => b.startOffset - a.startOffset);
+
+    for (const prevPlaceholder of prevPlaceholders) {
+        const startOffset =
+            activeSession.insertOffset + prevPlaceholder.startOffset;
+        const endOffset =
+            activeSession.insertOffset + prevPlaceholder.endOffset;
+        const modifierEndOffset = prevPlaceholder.modifierEndOffset
+            ? activeSession.insertOffset + prevPlaceholder.modifierEndOffset
+            : endOffset;
+
+        if (
+            startOffset <= endOffset &&
+            startOffset >= 0 &&
+            modifierEndOffset <= editor.document.getText().length
+        ) {
+            const startPos = editor.document.positionAt(startOffset);
+            const endPos = editor.document.positionAt(endOffset);
+            const content = editor.document.getText(
+                new vscode.Range(startPos, endPos),
+            );
+
+            let transformed = content;
+            if (prevPlaceholder.modifier && content) {
+                transformed = applyModifier(content, prevPlaceholder.modifier);
+                LOG.dev(
+                    `Applying modifier "${prevPlaceholder.modifier}" to "${content}" -> "${transformed}"`,
+                );
+            }
+
+            edits.push({
+                startOffset,
+                endOffset,
+                modifierEndOffset,
+                content,
+                transformed,
+            });
+        }
+    }
+
+    return edits;
+}
+
+/**
+ * 批量应用编辑操作
+ */
+function applyEdits(
+    editor: vscode.TextEditor,
+    edits: PlaceholderEdit[],
+): number {
+    let totalDelta = 0;
+    const editOperations: Array<{ range: vscode.Range; text: string }> = [];
+
+    for (const edit of edits) {
+        // 只有当内容变化或需要移除 modifier 时才编辑
+        if (
+            edit.transformed !== edit.content ||
+            edit.modifierEndOffset !== edit.endOffset
+        ) {
+            const startPos = editor.document.positionAt(edit.startOffset);
+            const replaceEndPos = editor.document.positionAt(
+                edit.modifierEndOffset,
+            );
+
+            editOperations.push({
+                range: new vscode.Range(startPos, replaceEndPos),
+                text: edit.transformed,
+            });
+
+            totalDelta +=
+                edit.transformed.length -
+                (edit.modifierEndOffset - edit.startOffset);
+        }
+    }
+
+    if (editOperations.length > 0) {
+        editor.edit(editBuilder => {
+            for (const op of editOperations) {
+                editBuilder.replace(op.range, op.text);
+            }
+        });
+    }
+
+    return totalDelta;
+}
+
+/**
  * 处理选择变化
  * 检测用户是否离开了某个占位符，如果是则应用 modifier
  * 支持相同索引但不同 modifier 的占位符
@@ -392,7 +572,9 @@ export function handleSelectionChange(
     editor: vscode.TextEditor,
     selection: vscode.Selection,
 ): void {
-    if (!activeSession) {return;}
+    if (!activeSession) {
+        return;
+    }
 
     // 检查文档是否匹配
     if (editor.document.uri.toString() !== activeSession.documentUri) {
@@ -415,104 +597,16 @@ export function handleSelectionChange(
 
     // 检测是否从某个占位符跳转到另一个位置
     if (lastPlaceholderIndex !== currentPlaceholder?.index) {
-        // 用户离开了占位符 lastPlaceholderIndex
-        // 找到所有相同索引的占位符
-        const prevPlaceholders = activeSession.placeholders.filter(
-            p => p.index === lastPlaceholderIndex,
-        );
+        // 收集并应用编辑
+        const edits = collectPlaceholderEdits(editor, lastPlaceholderIndex);
 
-        if (prevPlaceholders.length > 0) {
-            // 按从后往前的顺序处理，避免偏移问题
-            prevPlaceholders.sort((a, b) => b.startOffset - a.startOffset);
+        if (edits.length > 0) {
+            const totalDelta = applyEdits(editor, edits);
 
-            // 收集所有需要执行的编辑操作
-            const edits: Array<{
-                startOffset: number;
-                endOffset: number;
-                modifierEndOffset: number;
-                content: string;
-                transformed: string;
-            }> = [];
-
-            for (const prevPlaceholder of prevPlaceholders) {
-                // 获取占位符当前内容
-                const startOffset = activeSession.insertOffset + prevPlaceholder.startOffset;
-                const endOffset = activeSession.insertOffset + prevPlaceholder.endOffset;
-                // modifierEndOffset 是包含 ^modifier 的结束位置
-                const modifierEndOffset = prevPlaceholder.modifierEndOffset
-                    ? activeSession.insertOffset + prevPlaceholder.modifierEndOffset
-                    : endOffset;
-
-                if (startOffset <= endOffset && startOffset >= 0 && modifierEndOffset <= editor.document.getText().length) {
-                    const startPos = editor.document.positionAt(startOffset);
-                    const endPos = editor.document.positionAt(endOffset);
-                    const content = editor.document.getText(new vscode.Range(startPos, endPos));
-
-                    // 使用当前占位符的 modifier
-                    const modifierToApply = prevPlaceholder.modifier;
-
-                    let transformed = content;
-
-                    if (modifierToApply) {
-                        // 应用 modifier
-                        transformed = applyModifier(content, modifierToApply);
-                        LOG.dev(`Applying modifier "${modifierToApply}" to "${content}" -> "${transformed}"`);
-                    }
-
-                    // 记录编辑操作
-                    edits.push({
-                        startOffset,
-                        endOffset,
-                        modifierEndOffset,
-                        content,
-                        transformed,
-                    });
-                }
-            }
-
-            // 如果有需要执行的编辑，批量执行（从后往前，避免偏移问题）
-            if (edits.length > 0) {
-                let totalDelta = 0;
-                const editOperations: Array<{ range: vscode.Range; text: string }> = [];
-
-                for (const edit of edits) {
-                    // 计算考虑之前编辑的偏移量
-                    const adjustedStart = edit.startOffset;
-                    const adjustedModifierEnd = edit.modifierEndOffset;
-
-                    // 只有当内容变化或需要移除 modifier 时才编辑
-                    if (edit.transformed !== edit.content || edit.modifierEndOffset !== edit.endOffset) {
-                        const startPos = editor.document.positionAt(adjustedStart);
-                        const replaceEndPos = editor.document.positionAt(adjustedModifierEnd);
-
-                        editOperations.push({
-                            range: new vscode.Range(startPos, replaceEndPos),
-                            text: edit.transformed,
-                        });
-
-                        // 计算这个编辑的 delta
-                        const delta = edit.transformed.length - (edit.modifierEndOffset - edit.startOffset);
-                        totalDelta += delta;
-                    }
-                }
-
-                // 执行所有编辑
-                if (editOperations.length > 0) {
-                    editor.edit(editBuilder => {
-                        for (const op of editOperations) {
-                            editBuilder.replace(op.range, op.text);
-                        }
-                    });
-
-                    // 更新后续占位符的偏移（基于第一个编辑的位置）
-                    if (totalDelta !== 0 && edits.length > 0) {
-                        // 由于我们是从后往前处理，只需要更新在最后一个编辑位置之前的占位符
-                        // 但实际上，相同索引的占位符应该都在同一个位置，所以不需要更新
-                        // 这里我们更新所有在第一个编辑位置之后的占位符
-                        const firstEditStart = edits[edits.length - 1].startOffset;
-                        updatePlaceholderOffsetsAfter(totalDelta, firstEditStart);
-                    }
-                }
+            // 更新后续占位符的偏移
+            if (totalDelta !== 0) {
+                const firstEditStart = edits[edits.length - 1].startOffset;
+                updatePlaceholderOffsetsAfter(totalDelta, firstEditStart);
             }
         }
 
@@ -537,11 +631,17 @@ export function handleSelectionChange(
 /**
  * 更新指定位置之后的占位符偏移
  */
-function updatePlaceholderOffsetsAfter(delta: number, afterOffset: number): void {
-    if (!activeSession) {return;}
+function updatePlaceholderOffsetsAfter(
+    delta: number,
+    afterOffset: number,
+): void {
+    if (!activeSession) {
+        return;
+    }
 
     for (const placeholder of activeSession.placeholders) {
-        const placeholderStart = activeSession.insertOffset + placeholder.startOffset;
+        const placeholderStart =
+            activeSession.insertOffset + placeholder.startOffset;
 
         // 只更新在变化位置之后的占位符
         if (placeholderStart > afterOffset) {
@@ -552,11 +652,4 @@ function updatePlaceholderOffsetsAfter(delta: number, afterOffset: number): void
             }
         }
     }
-}
-
-/**
- * 检查是否有活跃的 snippet 会话
- */
-export function hasActiveSession(): boolean {
-    return activeSession !== null;
 }

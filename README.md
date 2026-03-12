@@ -40,7 +40,7 @@ Configure `dot-anything.rules` in VS Code settings.
 | Property      | Type                 | Required | Default | Description                                            |
 | ------------- | -------------------- | -------- | ------- | ------------------------------------------------------ |
 | `trigger`     | string               | Yes      | -       | Trigger keyword                                        |
-| `description` | string               | Yes      | -       | Description (supports Markdown)                        |
+| `description` | string               | No       | -       | Description (supports Markdown)                        |
 | `snippet`     | string \| string[]   | Yes      | -       | Template string or function (supports multiline array) |
 | `type`        | `text` \| `function` | No       | `text`  | Rule type                                              |
 | `fileType`    | string[]             | No       | `["*"]` | Language identifiers (e.g., `["javascript"]`)          |
@@ -66,6 +66,18 @@ Configure `dot-anything.rules` in VS Code settings.
 | `workspaceFolder` | Workspace folder path      |
 
 **Placeholder:** `#variable^formatFunction#`
+
+**Example:**
+
+```json
+{
+    "trigger": "comment",
+    "description": "Comment current line",
+    "snippet": "// #lineText#"
+}
+```
+
+Type `helloWorld.` → select `comment` → get `// helloWorld`
 
 | Description                                        | text Mode                 | function Mode          | Example                                                      |
 | -------------------------------------------------- | ------------------------- | ---------------------- | ------------------------------------------------------------ |
@@ -162,6 +174,98 @@ set Abc(v) {
 
 ---
 
+## Cursor Placeholder (Tab Jump)
+
+Use `#✏️#` syntax in snippets to define editable cursor positions with Tab navigation and automatic format conversion.
+
+### Syntax
+
+```
+#✏️<index>^<modifier>-<comment>#
+```
+
+| Part        | Required | Description                                           |
+| ----------- | -------- | ----------------------------------------------------- |
+| `<index>`   | Yes      | Tab order (starting from 1)                           |
+| `<modifier>`| No       | Format function to apply when leaving placeholder     |
+| `<comment>` | No       | Default value/hint text for placeholder               |
+
+### Examples
+
+**Basic Usage:**
+
+```json
+{
+    "trigger": "const",
+    "description": "Generate const declaration",
+    "snippet": "const #✏️1^toUpperCase-name# = #✏️2-value#;"
+}
+```
+
+**Result:**
+
+1. Type `myVar.const` → select rule
+2. Insert `const name^toUpperCase = value;`, cursor selects `name`
+3. Edit to `myvar`
+4. Press Tab to jump to next placeholder
+5. Auto-convert to `const MYVAR = value;` (apply `toUpperCase` and remove `^toUpperCase`)
+
+**Using Custom Functions as Modifiers:**
+
+```json
+{
+    "dot-anything.rules": [
+        {
+            "trigger": "cases",
+            "description": "Show multiple naming styles",
+            "snippet": "kebab: #✏️1^toKebabCase-name#, camel: #✏️1^toCamelCase#, hook: #✏️1^reactHook#"
+        }
+    ],
+    "dot-anything.fns": [
+        {
+            "name": "reactHook",
+            "fn": "(s = '', { fns }) => `use${fns.toUpperCaseFirst(s)}`"
+        }
+    ]
+}
+```
+
+**Result:**
+
+1. Type `demo.cases` → select rule
+2. Insert `kebab: name^toKebabCase, camel: name^toCamelCase, snake: name^toSnakeCase`, cursor selects `name`
+3. Edit to `hello world`
+4. Press Tab to jump
+5. Auto-convert to `kebab: hello-world, camel: helloWorld, snake: hello_world` (different modifiers applied to each position)
+
+### Modifier List
+
+Modifiers support all built-in format functions and custom functions (configured via `dot-anything.fns`).
+
+### Notes
+
+> **Placeholders with the same index share the same default value**
+>
+> Due to VS Code native Snippet limitations, multiple placeholders with the same index will use the first defined default value. This is expected behavior, not a bug.
+>
+> ```json
+> // Example: Both #✏️1# will display "name"
+> "snippet": "#✏️1-name# and #✏️1-another#"
+> // Result: "name and name"
+> ```
+>
+> **But each position can have different modifiers**
+>
+> Placeholders with the same index will apply their respective modifiers when leaving, achieving different conversion effects.
+>
+> ```json
+> "snippet": "#✏️1^toUpperCase-name# and #✏️1^toLowerCase-name#"
+> // Type "Hello" then press Tab to jump
+> // Result: "HELLO and hello"
+> ```
+
+---
+
 ## File Type Filter
 
 Limit rules to specific languages:
@@ -192,47 +296,47 @@ Full list: [VS Code Language Identifiers](https://code.visualstudio.com/docs/lan
         },
         {
             "trigger": "toLowerCase",
-            "description": "Convert all letters to lowercase\nExample: HELLO WORLD → hello world\nExample: HELLOWORLD → helloworld",
+            "description": "Convert all letters to lowercase\n`HELLO WORLD → hello world`\n`HELLOWORLD → helloworld`",
             "snippet": "#word^toLowerCase#"
         },
         {
             "trigger": "toUpperCase",
-            "description": "Convert all letters to uppercase\nExample: hello world → HELLO WORLD\nExample: helloworld → HELLOWORLD",
+            "description": "Convert all letters to uppercase\n`hello world → HELLO WORLD`\n`helloworld → HELLOWORLD`",
             "snippet": "#word^toUpperCase#"
         },
         {
             "trigger": "toUpperCaseFirst",
-            "description": "Capitalize first letter only\nExample: hello world → Hello world\nExample: helloworld → Helloworld",
+            "description": "Capitalize first letter only\n`hello world → Hello world`\n`helloworld → Helloworld`",
             "snippet": "#word^toUpperCaseFirst#"
         },
         {
             "trigger": "toCapitalize",
-            "description": "Capitalize first letter, lowercase rest\nExample: hello World → Hello world\nExample: helloWorld → Helloworld",
+            "description": "Capitalize first letter, lowercase rest\n`hello World → Hello world`\n`helloWorld → Helloworld`",
             "snippet": "#word^toCapitalize#"
         },
         {
             "trigger": "toTitleCase",
-            "description": "Capitalize first letter of each word\nExample: hello world → Hello World\nExample: helloWorld → Helloworld",
+            "description": "Capitalize first letter of each word\n`hello world → Hello World`\n`helloWorld → Helloworld`",
             "snippet": "#word^toTitleCase#"
         },
         {
             "trigger": "toKebabCase",
-            "description": "Words joined with `-`, all lowercase\nExample: HelloWorld → hello-world\nExample: Helloworld → helloworld",
+            "description": "Words joined with `-`, all lowercase\n`HelloWorld → hello-world`\n`Helloworld → helloworld`",
             "snippet": "#word^toKebabCase#"
         },
         {
             "trigger": "toSnakeCase",
-            "description": "Words joined with `_`, all lowercase\nExample: HelloWorld → hello_world\nExample: Helloworld → helloworld",
+            "description": "Words joined with `_`, all lowercase\n`HelloWorld → hello_world`\n`Helloworld → helloworld`",
             "snippet": "#word^toSnakeCase#"
         },
         {
             "trigger": "toCamelCase",
-            "description": "First word lowercase, subsequent words capitalized\nExample: hello-world → helloWorld\nExample: Helloworld → helloworld",
+            "description": "First word lowercase, subsequent words capitalized\n`hello-world → helloWorld`\n`Helloworld → helloworld`",
             "snippet": "#word^toCamelCase#"
         },
         {
             "trigger": "toPascalCase",
-            "description": "Each word capitalized, no separator\nExample: hello-world → HelloWorld\nExample: helloworld → Helloworld",
+            "description": "Each word capitalized, no separator\n`hello-world → HelloWorld`\n`helloworld → Helloworld`",
             "snippet": "#word^toPascalCase#"
         },
         {
@@ -247,6 +351,12 @@ Full list: [VS Code Language Identifiers](https://code.visualstudio.com/docs/lan
         },
         // function mode
         {
+            "trigger": "log",
+            "description": "Insert console.log with file info",
+            "type": "function",
+            "snippet": "(env, { fns }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
+        },
+        {
             "trigger": "getter",
             "description": "Generate getter/setter methods",
             "type": "function",
@@ -260,12 +370,6 @@ Full list: [VS Code Language Identifiers](https://code.visualstudio.com/docs/lan
                 "    this._${env.word} = v;",
                 "}`"
             ]
-        },
-        {
-            "trigger": "log",
-            "description": "Insert console.log with file info",
-            "type": "function",
-            "snippet": "(env, { fns }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
         }
     ]
 }
