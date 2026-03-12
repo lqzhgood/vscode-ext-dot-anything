@@ -44,6 +44,10 @@ class Logger {
     err(...args: any[]) {
         this.log('[ERROR] ', ...args);
     }
+
+    warn(...args: any[]) {
+        this.log('[WARN] ', ...args);
+    }
 }
 
 export const LOG = new Logger();

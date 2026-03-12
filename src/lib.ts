@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
-import { EnvVars, InnerRule, QuickRule, Rule, UserFn } from './types';
+import { EnvVars, InnerRule, ParsedSnippet, QuickRule, Rule, UserFn } from './types';
 import { WORKSPACE } from './const';
 import { baseQuickRules } from './rules';
+import { parseCursorPlaceholders } from './cursor';
 
 class ConfigCache {
     private quickRules: QuickRule[] | null = null;
@@ -113,17 +114,19 @@ export function getFns(): Record<string, any> {
     return configCache.getFns();
 }
 
-export function applyFormat(rule: InnerRule, envVars: EnvVars): string {
+export function applyFormat(rule: InnerRule, envVars: EnvVars): ParsedSnippet {
     const type = rule.type;
 
     // 使用缓存的 fns 和 quickRules
     const fns = getFns();
     const quickRules = getQuickRules();
 
+    let result: string;
+
     if (type === 'function') {
-        return rule.fn!(envVars, { fns });
+        result = rule.fn!(envVars, { fns });
     } else {
-        let result = rule.snippetStr;
+        result = rule.snippetStr;
         for (const [key, value] of Object.entries(envVars)) {
             result = result.replaceAll(`#${key}#`, value);
 
@@ -139,8 +142,10 @@ export function applyFormat(rule: InnerRule, envVars: EnvVars): string {
                 );
             }
         }
-        return result;
     }
+
+    // 解析光标占位符
+    return parseCursorPlaceholders(result);
 }
 
 export function isRuleApplicable(rule: InnerRule, languageId: string): boolean {

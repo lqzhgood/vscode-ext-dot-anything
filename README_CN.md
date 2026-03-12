@@ -40,7 +40,7 @@
 | 属性          | 类型                 | 必填 | 默认值  | 说明                                  |
 | ------------- | -------------------- | ---- | ------- | ------------------------------------- |
 | `trigger`     | string               | 是   | -       | 触发关键词                            |
-| `description` | string               | 是   | -       | 描述（支持 Markdown）                 |
+| `description` | string               | 否   | -       | 描述（支持 Markdown）                 |
 | `snippet`     | string \| string[]   | 是   | -       | 模板字符串或函数 (支持数组的多行形式) |
 | `type`        | `text` \| `function` | 否   | `text`  | 规则类型                              |
 | `fileType`    | string[]             | 否   | `["*"]` | 语言标识符（如 `["javascript"]`）     |
@@ -66,6 +66,18 @@
 | `workspaceFolder` | 工作区路径         |
 
 **占位符：** `#环境变量^格式函数#`
+
+**示例：**
+
+```json
+{
+    "trigger": "comment",
+    "description": "注释当前行",
+    "snippet": "// #lineText#"
+}
+```
+
+输入 `helloWorld.` → 选择 `comment` → 得到 `// helloWorld`
 
 | 说明                           | text 模式                 | function 模式          | 示例                                                         |
 | ------------------------------ | ------------------------- | ---------------------- | ------------------------------------------------------------ |
@@ -159,6 +171,98 @@ set Abc(v) {
     ]
 }
 ```
+
+---
+
+## 光标占位符（Tab 跳转）
+
+在 snippet 中使用 `#✏️#` 语法定义可编辑的光标位置，支持 Tab 键跳转和自动格式转换。
+
+### 语法
+
+```
+#✏️<索引>^<修饰符>-<注释>#
+```
+
+| 部分       | 必填 | 说明                                           |
+| ---------- | ---- | ---------------------------------------------- |
+| `<索引>`   | 是   | Tab 跳转顺序（从 1 开始）                      |
+| `<修饰符>` | 否   | 离开占位符时应用的格式函数（如 `toUpperCase`） |
+| `<注释>`   | 否   | 占位符默认值/提示文本                          |
+
+### 示例
+
+**基本用法：**
+
+```json
+{
+    "trigger": "const",
+    "description": "生成 const 声明",
+    "snippet": "const #✏️1^toUpperCase-name# = #✏️2-value#;"
+}
+```
+
+**效果：**
+
+1. 输入 `myVar.const` → 选择规则
+2. 插入 `const name^toUpperCase = value;`，光标选中 `name`
+3. 编辑为 `myvar`
+4. 按 Tab 跳转到下一个占位符
+5. 自动转换为 `const MYVAR = value;`（应用 `toUpperCase` 并移除 `^toUpperCase`）
+
+**使用自定义函数作为修饰符：**
+
+```json
+{
+    "dot-anything.rules": [
+        {
+            "trigger": "cases",
+            "description": "展示多种命名风格",
+            "snippet": "kebab: #✏️1^toKebabCase-name#, camel: #✏️1^toCamelCase#, hook: #✏️1^reactHook#"
+        }
+    ],
+    "dot-anything.fns": [
+        {
+            "name": "reactHook",
+            "fn": "(s = '', { fns }) => `use${fns.toUpperCaseFirst(s)}`"
+        }
+    ]
+}
+```
+
+**效果：**
+
+1. 输入 `demo.cases` → 选择规则
+2. 插入 `kebab: name^toKebabCase, camel: name^toCamelCase, snake: name^toSnakeCase`，光标选中 `name`
+3. 编辑为 `hello world`
+4. 按 Tab 跳转
+5. 自动转换为 `kebab: hello-world, camel: helloWorld, snake: hello_world`（三个位置分别应用不同的修饰符）
+
+### 修饰符列表
+
+修饰符支持所有内置格式函数，也支持自定义函数（通过 `dot-anything.fns` 配置）。
+
+### 注意事项
+
+> **相同索引的占位符共享同一个默认值**
+>
+> 由于 VS Code 原生 Snippet 的限制，相同索引的多个占位符会使用第一个定义的默认值。这是预期行为，不是 bug。
+>
+> ```json
+> // 示例：两个 #✏️1# 都会显示 "name"
+> "snippet": "#✏️1-name# and #✏️1-another#"
+> // 结果: "name and name"
+> ```
+>
+> **但每个位置可以有不同的修饰符**
+>
+> 相同索引的占位符在离开时会分别应用各自的修饰符，实现不同的转换效果。
+>
+> ```json
+> "snippet": "#✏️1^toUpperCase-name# and #✏️1^toLowerCase-name#"
+> // 输入 "Hello" 后按 Tab 跳转
+> // 结果: "HELLO and hello"
+> ```
 
 ---
 
