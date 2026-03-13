@@ -4,7 +4,7 @@
 
 ![logo](./public/logo_128.png)
 
-Press `.` to transform text into anything.
+Press `.` to transform text into anything, with custom function support.
 
 [中文文档](README_CN.md)
 
