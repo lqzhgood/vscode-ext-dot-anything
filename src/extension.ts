@@ -14,7 +14,7 @@ import {
 } from './cursor';
 
 // 缓存最近一次 completion 的 parsed 信息（用于启动 snippet 会话）
-let pendingSnippets: Map<string, ParsedSnippet> = new Map();
+let pendingSnippets: Map<string, ParsedSnippet[]> = new Map();
 
 // debug
 export function activate(context: vscode.ExtensionContext) {
@@ -78,40 +78,37 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
-            const parsed = pendingSnippets.get(docUri);
+            const pendingList = pendingSnippets.get(docUri);
 
-            LOG.dev('Looking for pending snippet:', docUri, 'found:', !!parsed);
+            LOG.dev('Looking for pending snippets:', docUri, 'found:', pendingList?.length ?? 0);
 
-            if (!parsed) {
+            if (!pendingList || pendingList.length === 0) {
                 return;
             }
 
-            LOG.dev('Found pending snippet for document:', docUri);
-
-            // 检查文本变化是否匹配预期的 snippet 插入
+            // 检查文本变化是否匹配任一待处理 snippet
             for (const change of e.contentChanges) {
                 const changeText = change.text;
 
-                // 获取实际插入的文本（不含 ${} 语法）
-                const actualText = getActualSnippetText(parsed.snippet);
+                for (const parsed of pendingList) {
+                    const actualText = getActualSnippetText(parsed.snippet);
 
-                LOG.dev('Text change:', {
-                    changeText,
-                    actualText,
-                    match: changeText === actualText,
-                });
+                    LOG.dev('Text change:', {
+                        changeText,
+                        actualText,
+                        match: changeText === actualText,
+                    });
 
-                // 检查插入的文本是否匹配
-                if (changeText === actualText) {
-                    // 启动 snippet 会话
-                    startSnippetSession(
-                        e.document,
-                        change.range.start,
-                        parsed,
-                    );
-                    pendingSnippets.delete(docUri);
-                    LOG.dev('Snippet session started from text change');
-                    return;
+                    if (changeText === actualText) {
+                        startSnippetSession(
+                            e.document,
+                            change.range.start,
+                            parsed,
+                        );
+                        pendingSnippets.delete(docUri);
+                        LOG.dev('Snippet session started from text change');
+                        return;
+                    }
                 }
             }
         }),
@@ -191,6 +188,8 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
                 };
 
                 const items: vscode.CompletionItem[] = [];
+                const docUri = document.uri.toString();
+                pendingSnippets.delete(docUri);
 
                 for (const rule of rules) {
                     if (!isRuleApplicable(rule, languageId)) {
@@ -229,10 +228,13 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
                     if (parsed.hasPlaceholders) {
                         item.insertText = new vscode.SnippetString(parsed.snippet);
 
-                        // 直接记录待处理的 snippet 信息（不依赖命令）
-                        // 使用 documentUri 作为唯一标识
-                        const docUri = document.uri.toString();
-                        pendingSnippets.set(docUri, parsed);
+                        // 记录待处理的 snippet 信息（同一文档可有多个候选）
+                        let pending = pendingSnippets.get(docUri);
+                        if (!pending) {
+                            pending = [];
+                            pendingSnippets.set(docUri, pending);
+                        }
+                        pending.push(parsed);
 
                         LOG.dev('Pending snippet recorded:', docUri, parsed.snippet);
                     } else {
