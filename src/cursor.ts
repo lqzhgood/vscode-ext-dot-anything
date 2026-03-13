@@ -14,9 +14,6 @@ const PLACEHOLDER_REGEX = /#✏️([^#]*)#/g;
 // VS Code snippet 格式正则：${1:default}^modifier 或 ${1}
 const VS_SNIPPET_REGEX = /\$\{(\d+)(?::([^}]*))?\}\^?([a-zA-Z]*)/g;
 
-// 用于 getActualSnippetText 的正则
-const VS_SNIPPET_TEXT_REGEX = /\$\{(\d+)(?::([^}]*))?\}(\^[a-zA-Z]+)?/g;
-
 // 全局会话状态
 let activeSession: SnippetSession | null = null;
 
@@ -293,32 +290,12 @@ function calculatePlaceholderPositions(
 }
 
 /**
- * 获取 snippet 对应的实际插入文本（不含 ${} 语法，但包含 ^modifier）
+ * 通过 CompletionItem.command 启动 snippet 会话
+ * cursorOffset 是 command 执行时光标的位置（第一个 tab stop）
  */
-export function getActualSnippetText(vsSnippet: string): string {
-    // 重置正则 lastIndex
-    VS_SNIPPET_TEXT_REGEX.lastIndex = 0;
-
-    // VS Code snippet 格式: ${1:default}^modifier 或 ${1}
-    // 实际插入的文本会包含 ^modifier 部分
-    return vsSnippet.replace(
-        VS_SNIPPET_TEXT_REGEX,
-        (match, index, defaultValue, modifier) => {
-            let result = defaultValue ?? '';
-            if (modifier) {
-                result += modifier;
-            }
-            return result;
-        },
-    );
-}
-
-/**
- * 开始 snippet 会话
- */
-export function startSnippetSession(
+export function startSnippetSessionFromCommand(
     document: vscode.TextDocument,
-    position: vscode.Position,
+    cursorOffset: number,
     parsed: ParsedSnippet,
 ): void {
     if (!parsed.hasPlaceholders) {
@@ -349,21 +326,22 @@ export function startSnippetSession(
         return a.startOffset - b.startOffset;
     });
 
-    const insertOffset = document.offsetAt(position);
+    // 取最低索引的第一个占位符，反推 insertOffset
+    const firstPlaceholder = placeholderRanges[0];
+    const insertOffset = cursorOffset - firstPlaceholder.startOffset;
 
     activeSession = {
         documentUri: document.uri.toString(),
         insertOffset,
         placeholders: placeholderRanges,
-        currentIndex: 1,
+        currentIndex: firstPlaceholder.index,
     };
 
-    // 重置追踪状态
-    // 不在这里初始化 lastPlaceholderIndex，让第一次选择变化事件来设置
-    lastSelectionOffset = null;
-    lastPlaceholderIndex = null;
+    // command 执行时，初始 selection change 已触发过，直接初始化 lastPlaceholderIndex
+    lastSelectionOffset = cursorOffset;
+    lastPlaceholderIndex = firstPlaceholder.index;
 
-    LOG.dev('Snippet session started:', activeSession);
+    LOG.dev('Snippet session started from command:', activeSession);
 }
 
 /**
@@ -479,6 +457,9 @@ function collectPlaceholderEdits(
     // 按从后往前的顺序处理，避免偏移问题
     prevPlaceholders.sort((a, b) => b.startOffset - a.startOffset);
 
+    const lastLine = editor.document.lineAt(editor.document.lineCount - 1);
+    const docLength = editor.document.offsetAt(lastLine.range.end);
+
     for (const prevPlaceholder of prevPlaceholders) {
         const startOffset =
             activeSession.insertOffset + prevPlaceholder.startOffset;
@@ -491,7 +472,7 @@ function collectPlaceholderEdits(
         if (
             startOffset <= endOffset &&
             startOffset >= 0 &&
-            modifierEndOffset <= editor.document.getText().length
+            modifierEndOffset <= docLength
         ) {
             const startPos = editor.document.positionAt(startOffset);
             const endPos = editor.document.positionAt(endOffset);
@@ -523,10 +504,10 @@ function collectPlaceholderEdits(
 /**
  * 批量应用编辑操作
  */
-function applyEdits(
+async function applyEdits(
     editor: vscode.TextEditor,
     edits: PlaceholderEdit[],
-): number {
+): Promise<number> {
     let totalDelta = 0;
     const editOperations: Array<{ range: vscode.Range; text: string }> = [];
 
@@ -553,11 +534,14 @@ function applyEdits(
     }
 
     if (editOperations.length > 0) {
-        editor.edit(editBuilder => {
+        const success = await editor.edit(editBuilder => {
             for (const op of editOperations) {
                 editBuilder.replace(op.range, op.text);
             }
         });
+        if (!success) {
+            return 0;
+        }
     }
 
     return totalDelta;
@@ -568,10 +552,10 @@ function applyEdits(
  * 检测用户是否离开了某个占位符，如果是则应用 modifier
  * 支持相同索引但不同 modifier 的占位符
  */
-export function handleSelectionChange(
+export async function handleSelectionChange(
     editor: vscode.TextEditor,
     selection: vscode.Selection,
-): void {
+): Promise<void> {
     if (!activeSession) {
         return;
     }
@@ -601,7 +585,7 @@ export function handleSelectionChange(
         const edits = collectPlaceholderEdits(editor, lastPlaceholderIndex);
 
         if (edits.length > 0) {
-            const totalDelta = applyEdits(editor, edits);
+            const totalDelta = await applyEdits(editor, edits);
 
             // 更新后续占位符的偏移
             if (totalDelta !== 0) {

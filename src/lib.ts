@@ -3,6 +3,7 @@ import { EnvVars, InnerRule, ParsedSnippet, QuickRule, Rule, UserFn } from './ty
 import { WORKSPACE } from './const';
 import { baseQuickRules } from './rules';
 import { parseCursorPlaceholders } from './cursor';
+import { LOG } from './utils';
 
 class ConfigCache {
     private quickRules: QuickRule[] | null = null;
@@ -35,7 +36,11 @@ class ConfigCache {
                 };
 
                 if (r.type === 'function') {
-                    r.fn = new Function(`return (${r.snippetStr})`)();
+                    try {
+                        r.fn = new Function(`return (${r.snippetStr})`)();
+                    } catch (err) {
+                        LOG.err(`Invalid function in rule "${r.trigger}": ${err}`);
+                    }
                 }
 
                 return r;
@@ -69,15 +74,19 @@ class ConfigCache {
         const userFns = this.getConfig<UserFn[]>('fns', []);
 
         // 用户函数转换为 quickRules 格式
-        const userQuickRules: QuickRule[] = userFns.map(userFn => {
-            const fn = new Function(`return (${userFn.fn})`)();
-
-            return {
-                name: userFn.name,
-                makeKey: (k: string) => '#' + k + '^' + userFn.name + '#',
-                makeValue: fn,
-            };
-        });
+        const userQuickRules: QuickRule[] = [];
+        for (const userFn of userFns) {
+            try {
+                const fn = new Function(`return (${userFn.fn})`)();
+                userQuickRules.push({
+                    name: userFn.name,
+                    makeKey: (k: string) => '#' + k + '^' + userFn.name + '#',
+                    makeValue: fn,
+                });
+            } catch (err) {
+                LOG.err(`Invalid user function "${userFn.name}": ${err}`);
+            }
+        }
 
         // 合并：用户配置优先（同名覆盖）
         const ruleMap = new Map<string, QuickRule>();
@@ -115,44 +124,36 @@ export function getFns(): Record<string, any> {
 }
 
 export function applyFormat(rule: InnerRule, envVars: EnvVars): ParsedSnippet {
-    const type = rule.type;
-
-    // 使用缓存的 fns 和 quickRules
     const fns = getFns();
-    const quickRules = getQuickRules();
-
     let result: string;
 
-    if (type === 'function') {
+    if (rule.type === 'function') {
         result = rule.fn!(envVars, { fns });
     } else {
-        result = rule.snippetStr;
-        for (const [key, value] of Object.entries(envVars)) {
-            result = result.replaceAll(`#${key}#`, value);
-
-            // 优化：如果 snippet 中没有 #key^，则跳过该 key 所有扩展符替换
-            if (!result.includes(`#${key}^`)) {
-                continue;
-            }
-
-            for (const { makeKey, makeValue } of quickRules) {
-                result = result.replaceAll(
-                    makeKey(key),
-                    makeValue(value, { fns }),
-                );
-            }
-        }
+        // 单次正则替换所有 #key# 和 #key^format# 模式
+        const envMap = envVars as Record<string, string>;
+        result = rule.snippetStr.replace(
+            /#([^#^]+?)(?:\^([^#]+))?#/g,
+            (match, key: string, format: string | undefined) => {
+                const value = envMap[key];
+                if (value === undefined) { return match; }
+                if (!format) { return value; }
+                const fn = fns[format];
+                return fn ? fn(value, { fns }) : match;
+            },
+        );
     }
 
-    // 解析光标占位符
     return parseCursorPlaceholders(result);
 }
 
 export function isRuleApplicable(rule: InnerRule, languageId: string): boolean {
     const fileType = rule.fileType;
     if (!fileType || fileType.length === 0) {
-        // 未配置 fileType 时不限制语言
         return true;
+    }
+    if (typeof fileType === 'string') {
+        return fileType === '*' || fileType === languageId;
     }
     return fileType.includes('*') || fileType.includes(languageId);
 }

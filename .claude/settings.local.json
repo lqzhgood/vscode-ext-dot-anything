@@ -5,7 +5,8 @@
       "Bash(node:*)",
       "Bash(npm test:*)",
       "WebSearch",
-      "WebFetch(domain:code.visualstudio.com)"
+      "WebFetch(domain:code.visualstudio.com)",
+      "Bash(find src/test -name \"*.ts\" -type f 2>/dev/null | head -10)"
     ]
   }
 }
