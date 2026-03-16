@@ -206,6 +206,16 @@
                                     }
                                 ],
                                 "description": "snippet string (use #word# as placeholder) or function string"
+                            },
+                            "replaceMode": {
+                                "type": "string",
+                                "enum": [
+                                    "word",
+                                    "line",
+                                    "file"
+                                ],
+                                "default": "word",
+                                "description": "Controls replacement scope: 'word' replaces only the nearest word (default), 'line' replaces the entire current line, 'file' replaces the entire file"
                             }
                         }
                     }
