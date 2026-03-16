@@ -1,5 +1,12 @@
 import * as vscode from 'vscode';
-import { EnvVars, InnerRule, ParsedSnippet, QuickRule, Rule, UserFn } from './types';
+import {
+    EnvVars,
+    InnerRule,
+    ParsedSnippet,
+    QuickRule,
+    Rule,
+    UserFn,
+} from './types';
 import { WORKSPACE } from './const';
 import { baseQuickRules } from './rules';
 import { parseCursorPlaceholders } from './cursor';
@@ -29,6 +36,7 @@ class ConfigCache {
                     type: v.type ?? 'text',
                     trigger: v.trigger,
                     description: v.description,
+                    replaceMode: v.replaceMode ?? 'word',
                     snippetStr: Array.isArray(v.snippet)
                         ? v.snippet.join('\n')
                         : v.snippet,
@@ -39,7 +47,9 @@ class ConfigCache {
                     try {
                         r.fn = new Function(`return (${r.snippetStr})`)();
                     } catch (err) {
-                        LOG.err(`Invalid function in rule "${r.trigger}": ${err}`);
+                        LOG.err(
+                            `Invalid function in rule "${r.trigger}": ${err}`,
+                        );
                     }
                 }
 
@@ -136,8 +146,12 @@ export function applyFormat(rule: InnerRule, envVars: EnvVars): ParsedSnippet {
             /#([^#^]+?)(?:\^([^#]+))?#/g,
             (match, key: string, format: string | undefined) => {
                 const value = envMap[key];
-                if (value === undefined) { return match; }
-                if (!format) { return value; }
+                if (value === undefined) {
+                    return match;
+                }
+                if (!format) {
+                    return value;
+                }
                 const fn = fns[format];
                 return fn ? fn(value, { fns }) : match;
             },

@@ -22,9 +22,17 @@ export function activate(context: vscode.ExtensionContext) {
             'dot-anything._startSnippetSession',
             (parsed: ParsedSnippet) => {
                 const editor = vscode.window.activeTextEditor;
-                if (!editor) { return; }
-                const cursorOffset = editor.document.offsetAt(editor.selection.start);
-                startSnippetSessionFromCommand(editor.document, cursorOffset, parsed);
+                if (!editor) {
+                    return;
+                }
+                const cursorOffset = editor.document.offsetAt(
+                    editor.selection.start,
+                );
+                startSnippetSessionFromCommand(
+                    editor.document,
+                    cursorOffset,
+                    parsed,
+                );
             },
         ),
     );
@@ -56,7 +64,9 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.workspace.onDidChangeTextDocument(e => {
             const session = getActiveSession();
-            if (!session) { return; }
+            if (!session) {
+                return;
+            }
 
             const docUri = e.document.uri.toString();
 
@@ -79,10 +89,14 @@ export function activate(context: vscode.ExtensionContext) {
     // 监听选择变化，检测离开占位符时应用 modifier
     context.subscriptions.push(
         vscode.window.onDidChangeTextEditorSelection(e => {
-            if (!getActiveSession()) {return;}
+            if (!getActiveSession()) {
+                return;
+            }
 
             const selection = e.selections[0];
-            if (!selection) {return;}
+            if (!selection) {
+                return;
+            }
 
             handleSelectionChange(e.textEditor, selection);
         }),
@@ -91,7 +105,7 @@ export function activate(context: vscode.ExtensionContext) {
     // 监听编辑器切换，结束会话
     // 注意：只在真正切换到不同文档时结束会话
     context.subscriptions.push(
-        vscode.window.onDidChangeActiveTextEditor((editor) => {
+        vscode.window.onDidChangeActiveTextEditor(editor => {
             const currentUri = editor?.document.uri.toString();
             LOG.dev('Active text editor changed:', currentUri);
 
@@ -177,7 +191,8 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
 
                     // 替换范围：根据 replaceMode 决定替换 word、整行还是整个文件
                     const startChar = position.character - word.length - 1;
-                    const replaceMode = rule.replaceMode ?? 'word';
+                    const replaceMode = rule.replaceMode;
+
                     let replaceRange: vscode.Range;
                     if (replaceMode === 'line') {
                         replaceRange = document.lineAt(position.line).range;
@@ -196,7 +211,9 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
 
                     // 如果有占位符，使用 SnippetString 并设置 command
                     if (parsed.hasPlaceholders) {
-                        item.insertText = new vscode.SnippetString(parsed.snippet);
+                        item.insertText = new vscode.SnippetString(
+                            parsed.snippet,
+                        );
                         item.command = {
                             command: 'dot-anything._startSnippetSession',
                             title: '',

@@ -12,9 +12,13 @@ export interface Rule {
     replaceMode?: 'word' | 'line' | 'file';
 }
 
-export interface InnerRule extends Omit<Rule, 'type' | 'snippet'> {
+export interface InnerRule extends Omit<
+    Rule,
+    'type' | 'snippet' | 'replaceMode'
+> {
     type: 'function' | 'text';
     snippetStr: string;
+    replaceMode: 'word' | 'line' | 'file';
     fn?: (envVars: EnvVars, ctx: { fns: Record<string, any> }) => string;
 }
 
@@ -42,17 +46,17 @@ export interface QuickRule {
  * 光标占位符信息
  */
 export interface CursorPlaceholder {
-    index: number;           // Tab 顺序
-    modifier?: string;       // 修饰符，如 'toLowerCase'
-    comment?: string;        // 注释（作为默认值）
-    original: string;        // 原始匹配字符串
+    index: number; // Tab 顺序
+    modifier?: string; // 修饰符，如 'toLowerCase'
+    comment?: string; // 注释（作为默认值）
+    original: string; // 原始匹配字符串
 }
 
 /**
  * 解析后的 Snippet 结果
  */
 export interface ParsedSnippet {
-    snippet: string;         // VS Code snippet 格式字符串
+    snippet: string; // VS Code snippet 格式字符串
     placeholders: CursorPlaceholder[];
     hasPlaceholders: boolean;
 }
@@ -62,8 +66,8 @@ export interface ParsedSnippet {
  */
 export interface PlaceholderRange {
     index: number;
-    startOffset: number;     // 相对于插入位置的偏移
-    endOffset: number;       // 占位符内容结束位置
+    startOffset: number; // 相对于插入位置的偏移
+    endOffset: number; // 占位符内容结束位置
     modifierEndOffset?: number; // modifier 结束位置（包含 ^modifier）
     modifier?: string;
 }
@@ -73,7 +77,7 @@ export interface PlaceholderRange {
  */
 export interface SnippetSession {
     documentUri: string;
-    insertOffset: number;    // 插入位置
+    insertOffset: number; // 插入位置
     placeholders: PlaceholderRange[];
-    currentIndex: number;    // 当前占位符索引
+    currentIndex: number; // 当前占位符索引
 }
