@@ -37,13 +37,14 @@
 
 ### 规则属性
 
-| 属性          | 类型                 | 必填 | 默认值  | 说明                                  |
-| ------------- | -------------------- | ---- | ------- | ------------------------------------- |
-| `trigger`     | string               | 是   | -       | 触发关键词                            |
-| `description` | string               | 否   | -       | 描述（支持 Markdown）                 |
-| `snippet`     | string \| string[]   | 是   | -       | 模板字符串或函数 (支持数组的多行形式) |
-| `type`        | `text` \| `function` | 否   | `text`  | 规则类型                              |
-| `fileType`    | string[]             | 否   | `["*"]` | 语言标识符（如 `["javascript"]`）     |
+| 属性          | 类型                       | 必填 | 默认值  | 说明                                  |
+| ------------- | -------------------------- | ---- | ------- | ------------------------------------- |
+| `trigger`     | string                     | 是   | -       | 触发关键词                            |
+| `description` | string                     | 否   | -       | 描述（支持 Markdown）                 |
+| `snippet`     | string \| string[]         | 是   | -       | 模板字符串或函数 (支持数组的多行形式) |
+| `type`        | `text` \| `function`       | 否   | `text`  | 规则类型                              |
+| `fileType`    | string[]                   | 否   | `["*"]` | 语言标识符（如 `["javascript"]`）     |
+| `replaceMode` | `word` \| `line` \| `file` | 否   | `word`  | 替换范围（单词 / 当前行 / 整个文件）  |
 
 ---
 
@@ -263,6 +264,33 @@ set Abc(v) {
 > // 输入 "Hello" 后按 Tab 跳转
 > // 结果: "HELLO and hello"
 > ```
+
+---
+
+## 替换范围（replaceMode）
+
+通过 `replaceMode` 控制补全被接受时替换的文本范围。
+
+| 值     | 替换范围         | 示例（输入 `abc def.`，结果为 `DEF`） |
+| ------ | ---------------- | ------------------------------------- |
+| `word` | 仅替换最近的单词 | `abc DEF`                             |
+| `line` | 替换当前整行     | `DEF`（整行被替换）                   |
+| `file` | 替换整个文件     | 整个文件内容被替换                    |
+
+**示例 — 将整行转为注释：**
+
+```json
+{
+    "trigger": "comment",
+    "description": "将整行转为注释",
+    "replaceMode": "line",
+    "snippet": "// #lineText#"
+}
+```
+
+输入 `abc def.` → 选择 `comment` → 整行变为 `// abc def`
+
+> **注意：** 格式化结果（snippet 输出）不受 `replaceMode` 影响，仅替换范围不同。默认值为 `word`，与旧版行为完全兼容。
 
 ---
 
