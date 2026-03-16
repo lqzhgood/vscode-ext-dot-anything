@@ -1,14 +1,34 @@
 # Dot Anything
 
+[English](README.md)
+
 [![Open in Visual Studio Code](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=Open%20in%20Visual%20Studio%20Code&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://marketplace.visualstudio.com/items?itemName=lqzh.dot-anything) [![Marketplace Version](https://vsmarketplacebadges.dev/version-short/lqzh.dot-anything.svg)](https://marketplace.visualstudio.com/items?itemName=lqzh.dot-anything) [![Downloads](https://vsmarketplacebadges.dev/downloads-short/lqzh.dot-anything.svg)](https://marketplace.visualstudio.com/items?itemName=lqzh.dot-anything) [![Installs](https://vsmarketplacebadges.dev/installs-short/lqzh.dot-anything.svg)](https://marketplace.visualstudio.com/items?itemName=lqzh.dot-anything) [![Rating](https://vsmarketplacebadges.dev/rating-short/lqzh.dot-anything.svg)](https://marketplace.visualstudio.com/items?itemName=lqzh.dot-anything)
 
 ![logo](./public/logo_128.png)
 
+> **先想到什么，就先输入什么。**
+
+```text
+            ╭─────────────────────╮
+            │ 💭 想输出变量 name？ │
+            ╰──────────┬──────────╯
+                       ○
+                      ○
+                  {\_/}
+                  ( •.•)
+                  / >
+
+   😫 传统 Snippet                      😊 Dot Anything
+      {\_/}                                {\_/}
+      ( -_-)  name → clg → name            ( ^.^)  name.log
+      / >     🔄 上下文切换 ×2              / >     ✨ 思维零打断
+```
+
 按下 `.` 键，将文本转换为任意格式，支持自定义函数转化。
 
-[English](README.md)
-
 ## 快速开始
+
+![start](./public/start.gif)
 
 ```json
 {
@@ -23,13 +43,6 @@
 ```
 
 输入 `helloWorld.` → 选择 `upper` → 得到 `HELLOWORLD`
-
-## 工作原理
-
-1. 输入任意文本（如 `helloWorld`）
-2. 输入 `.` 触发补全
-3. 选择规则（如 `upper`）
-4. 文本自动替换
 
 ## 配置
 

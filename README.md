@@ -1,14 +1,34 @@
 # Dot Anything
 
+[中文文档](README_CN.md)
+
 [![Open in Visual Studio Code](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=Open%20in%20Visual%20Studio%20Code&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://marketplace.visualstudio.com/items?itemName=lqzh.dot-anything) [![Marketplace Version](https://vsmarketplacebadges.dev/version-short/lqzh.dot-anything.svg)](https://marketplace.visualstudio.com/items?itemName=lqzh.dot-anything) [![Downloads](https://vsmarketplacebadges.dev/downloads-short/lqzh.dot-anything.svg)](https://marketplace.visualstudio.com/items?itemName=lqzh.dot-anything) [![Installs](https://vsmarketplacebadges.dev/installs-short/lqzh.dot-anything.svg)](https://marketplace.visualstudio.com/items?itemName=lqzh.dot-anything) [![Rating](https://vsmarketplacebadges.dev/rating-short/lqzh.dot-anything.svg)](https://marketplace.visualstudio.com/items?itemName=lqzh.dot-anything)
 
 ![logo](./public/logo_128.png)
 
+> **Type what you think, the moment you think it.**
+
+```text
+            ╭──────────────────────────╮
+            │ 💭 Want to output name?  │
+            ╰──────────┬───────────────╯
+                       ○
+                      ○
+                  {\_/}
+                  ( •.•)
+                  / >
+
+   😫 Traditional Snippet               😊 Dot Anything
+      {\_/}                                {\_/}
+      ( -_-)  name → clg → name            ( ^.^)  name.log
+      / >     🔄 Context switch ×2         / >     ✨ Zero interruption
+```
+
 Press `.` to transform text into anything, with custom function support.
 
-[中文文档](README_CN.md)
-
 ## Quick Start
+
+![start](./public/start.gif)
 
 ```json
 {
@@ -23,13 +43,6 @@ Press `.` to transform text into anything, with custom function support.
 ```
 
 Type `helloWorld.` → select `upper` → get `HELLOWORLD`
-
-## How It Works
-
-1. Type any text (e.g., `helloWorld`)
-2. Type `.` to trigger completion
-3. Select a rule (e.g., `upper`)
-4. Text is replaced automatically
 
 ## Configuration
 
@@ -185,11 +198,11 @@ Use `#✏️#` syntax in snippets to define editable cursor positions with Tab n
 #✏️<index>^<modifier>-<comment>#
 ```
 
-| Part        | Required | Description                                           |
-| ----------- | -------- | ----------------------------------------------------- |
-| `<index>`   | Yes      | Tab order (starting from 1)                           |
-| `<modifier>`| No       | Format function to apply when leaving placeholder     |
-| `<comment>` | No       | Default value/hint text for placeholder               |
+| Part         | Required | Description                                       |
+| ------------ | -------- | ------------------------------------------------- |
+| `<index>`    | Yes      | Tab order (starting from 1)                       |
+| `<modifier>` | No       | Format function to apply when leaving placeholder |
+| `<comment>`  | No       | Default value/hint text for placeholder           |
 
 ### Examples
 
@@ -271,11 +284,11 @@ Modifiers support all built-in format functions and custom functions (configured
 
 Control the scope of text replaced when a completion item is accepted via `replaceMode`.
 
-| Value  | Replacement Scope    | Example (input `abc def.`, result `DEF`) |
-| ------ | -------------------- | ---------------------------------------- |
-| `word` | Nearest word only    | `abc DEF`                                |
-| `line` | Entire current line  | `DEF` (whole line replaced)              |
-| `file` | Entire file          | Entire file content replaced             |
+| Value  | Replacement Scope   | Example (input `abc def.`, result `DEF`) |
+| ------ | ------------------- | ---------------------------------------- |
+| `word` | Nearest word only   | `abc DEF`                                |
+| `line` | Entire current line | `DEF` (whole line replaced)              |
+| `file` | Entire file         | Entire file content replaced             |
 
 **Example — comment out the entire line:**
 
@@ -467,9 +480,9 @@ Type `state.hook` → get `useState`
 
 **Function Parameters:**
 
-| Parameter | Description                                    |
-| --------- | ---------------------------------------------- |
-| `s`       | Input string                                   |
+| Parameter | Description                                             |
+| --------- | ------------------------------------------------------- |
+| `s`       | Input string                                            |
 | `fns`     | Built-in formatting functions (e.g., `fns.toUpperCase`) |
 
 **Note:** Custom functions override built-in functions with the same name.
