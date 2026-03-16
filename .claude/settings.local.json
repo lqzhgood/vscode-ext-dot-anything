@@ -7,7 +7,9 @@
       "WebSearch",
       "WebFetch(domain:code.visualstudio.com)",
       "Bash(find src/test -name \"*.ts\" -type f 2>/dev/null | head -10)",
-      "Bash(ls \"E:\\\\Git\\\\vscode-ext-dot-anything\"/*.md)"
+      "Bash(ls \"E:\\\\Git\\\\vscode-ext-dot-anything\"/*.md)",
+      "Bash(git diff:*)",
+      "Bash(git add:*)"
     ]
   }
 }
