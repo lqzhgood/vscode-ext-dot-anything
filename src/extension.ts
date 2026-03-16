@@ -150,7 +150,7 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
 
                 const envVars: EnvVars = {
                     word: word,
-                    lineText: lineText.replace(/\.$/, ''),
+                    lineText: lineText.slice(0, position.character - 1) + lineText.slice(position.character),
                     filePath: document.fileName,
                     fileName: name,
                     fileBase: base,
@@ -189,25 +189,47 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
                         rule.description ?? '',
                     );
 
-                    // 替换范围：根据 replaceMode 决定替换 word、整行还是整个文件
+                    // word range：始终只覆盖 `word.` 部分，确保 VS Code 过滤正常
                     const startChar = position.character - word.length - 1;
                     const replaceMode = rule.replaceMode;
+                    const wordRange = new vscode.Range(
+                        new vscode.Position(position.line, startChar),
+                        position,
+                    );
+                    item.range = wordRange;
 
-                    let replaceRange: vscode.Range;
-                    if (replaceMode === 'line') {
-                        replaceRange = document.lineAt(position.line).range;
-                    } else if (replaceMode === 'file') {
-                        replaceRange = new vscode.Range(
-                            new vscode.Position(0, 0),
-                            document.lineAt(document.lineCount - 1).range.end,
-                        );
-                    } else {
-                        replaceRange = new vscode.Range(
-                            new vscode.Position(position.line, startChar),
-                            position,
-                        );
+                    // line/file 模式：用 additionalTextEdits 删除 word 范围外的内容
+                    if (replaceMode === 'line' || replaceMode === 'file') {
+                        const fullRange =
+                            replaceMode === 'line'
+                                ? document.lineAt(position.line).range
+                                : new vscode.Range(
+                                      new vscode.Position(0, 0),
+                                      document.lineAt(document.lineCount - 1)
+                                          .range.end,
+                                  );
+                        const edits: vscode.TextEdit[] = [];
+                        // 删除 word 前面的内容
+                        if (fullRange.start.isBefore(wordRange.start)) {
+                            edits.push(
+                                vscode.TextEdit.delete(
+                                    new vscode.Range(
+                                        fullRange.start,
+                                        wordRange.start,
+                                    ),
+                                ),
+                            );
+                        }
+                        // 删除光标后面的内容
+                        if (position.isBefore(fullRange.end)) {
+                            edits.push(
+                                vscode.TextEdit.delete(
+                                    new vscode.Range(position, fullRange.end),
+                                ),
+                            );
+                        }
+                        item.additionalTextEdits = edits;
                     }
-                    item.range = replaceRange;
 
                     // 如果有占位符，使用 SnippetString 并设置 command
                     if (parsed.hasPlaceholders) {
