@@ -37,13 +37,14 @@ Configure `dot-anything.rules` in VS Code settings.
 
 ### Rule Properties
 
-| Property      | Type                 | Required | Default | Description                                            |
-| ------------- | -------------------- | -------- | ------- | ------------------------------------------------------ |
-| `trigger`     | string               | Yes      | -       | Trigger keyword                                        |
-| `description` | string               | No       | -       | Description (supports Markdown)                        |
-| `snippet`     | string \| string[]   | Yes      | -       | Template string or function (supports multiline array) |
-| `type`        | `text` \| `function` | No       | `text`  | Rule type                                              |
-| `fileType`    | string[]             | No       | `["*"]` | Language identifiers (e.g., `["javascript"]`)          |
+| Property      | Type                       | Required | Default | Description                                            |
+| ------------- | -------------------------- | -------- | ------- | ------------------------------------------------------ |
+| `trigger`     | string                     | Yes      | -       | Trigger keyword                                        |
+| `description` | string                     | No       | -       | Description (supports Markdown)                        |
+| `snippet`     | string \| string[]         | Yes      | -       | Template string or function (supports multiline array) |
+| `type`        | `text` \| `function`       | No       | `text`  | Rule type                                              |
+| `fileType`    | string[]                   | No       | `["*"]` | Language identifiers (e.g., `["javascript"]`)          |
+| `replaceMode` | `word` \| `line` \| `file` | No       | `word`  | Replacement scope (word / current line / entire file)  |
 
 ---
 
@@ -263,6 +264,33 @@ Modifiers support all built-in format functions and custom functions (configured
 > // Type "Hello" then press Tab to jump
 > // Result: "HELLO and hello"
 > ```
+
+---
+
+## Replace Mode
+
+Control the scope of text replaced when a completion item is accepted via `replaceMode`.
+
+| Value  | Replacement Scope    | Example (input `abc def.`, result `DEF`) |
+| ------ | -------------------- | ---------------------------------------- |
+| `word` | Nearest word only    | `abc DEF`                                |
+| `line` | Entire current line  | `DEF` (whole line replaced)              |
+| `file` | Entire file          | Entire file content replaced             |
+
+**Example — comment out the entire line:**
+
+```json
+{
+    "trigger": "comment",
+    "description": "Comment out the whole line",
+    "replaceMode": "line",
+    "snippet": "// #lineText#"
+}
+```
+
+Type `abc def.` → select `comment` → entire line becomes `// abc def`
+
+> **Note:** The formatted result (snippet output) is unchanged regardless of `replaceMode`. Only the replacement range changes. Default is `word`, fully backwards-compatible.
 
 ---
 

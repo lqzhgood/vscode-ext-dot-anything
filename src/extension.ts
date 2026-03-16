@@ -175,12 +175,23 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
                         rule.description ?? '',
                     );
 
-                    // 替换范围：从 input 起点到光标（含 `input.`）
+                    // 替换范围：根据 replaceMode 决定替换 word、整行还是整个文件
                     const startChar = position.character - word.length - 1;
-                    const replaceRange = new vscode.Range(
-                        new vscode.Position(position.line, startChar),
-                        position,
-                    );
+                    const replaceMode = rule.replaceMode ?? 'word';
+                    let replaceRange: vscode.Range;
+                    if (replaceMode === 'line') {
+                        replaceRange = document.lineAt(position.line).range;
+                    } else if (replaceMode === 'file') {
+                        replaceRange = new vscode.Range(
+                            new vscode.Position(0, 0),
+                            document.lineAt(document.lineCount - 1).range.end,
+                        );
+                    } else {
+                        replaceRange = new vscode.Range(
+                            new vscode.Position(position.line, startChar),
+                            position,
+                        );
+                    }
                     item.range = replaceRange;
 
                     // 如果有占位符，使用 SnippetString 并设置 command

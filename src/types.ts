@@ -9,6 +9,7 @@ export interface Rule {
     description?: string;
     type?: 'function' | 'text';
     snippet: string | string[];
+    replaceMode?: 'word' | 'line' | 'file';
 }
 
 export interface InnerRule extends Omit<Rule, 'type' | 'snippet'> {

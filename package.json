@@ -6,7 +6,7 @@
     "author": {
         "name": "lqzh"
     },
-    "version": "1.2.1",
+    "version": "1.3.0",
     "icon": "public/logo_128.png",
     "galleryBanner": {
         "color": "#0D1117",
@@ -206,6 +206,16 @@
                                     }
                                 ],
                                 "description": "snippet string (use #word# as placeholder) or function string"
+                            },
+                            "replaceMode": {
+                                "type": "string",
+                                "enum": [
+                                    "word",
+                                    "line",
+                                    "file"
+                                ],
+                                "default": "word",
+                                "description": "Controls replacement scope: 'word' replaces only the nearest word (default), 'line' replaces the entire current line, 'file' replaces the entire file"
                             }
                         }
                     }
