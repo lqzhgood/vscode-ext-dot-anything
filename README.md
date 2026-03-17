@@ -35,28 +35,14 @@ Press `.` to transform text into anything, with custom function support.
     "dot-anything.rules": [
         {
             "trigger": "log",
-            "type": "function",
             "description": "Insert console.log (with file location)",
-            "snippet": "(env) => `console.log('[${env.fileName}:${env.lineNumber}:${env.column}] ${env.word}:', ${env.word})`"
-        },
-        {
-            "trigger": "hook",
-            "description": "Generate React Hook name",
-            "snippet": "#word^reactHook#"
-        }
-    ],
-    "dot-anything.fns": [
-        {
-            "name": "reactHook",
-            "fn": "(s, { fns }) => `use${fns.toPascalCase(s)}`"
+            "snippet": "console.log('🖨️ #filePath#[#lineNumber#:#column#] #word^toKebabCase#:', #word#);"
         }
     ]
 }
 ```
 
-In `app.ts` line 12, type `name.` → select `log` → get `console.log('[app:12:5] name:', name)`
-
-Type `dark mode.` → select `hook` → get `useDarkMode`
+Type `HelloWorld.` → select `log` → get `console.log('🖨️ /home/demo.js[15:12] hello-world:', HelloWorld);`
 
 ## Configuration
 
@@ -64,19 +50,21 @@ Configure `dot-anything.rules` in VS Code settings.
 
 ### Rule Properties
 
-| Property      | Type                       | Required | Default | Description                                            |
-| ------------- | -------------------------- | -------- | ------- | ------------------------------------------------------ |
-| `trigger`     | string                     | Yes      | -          | Trigger keyword                                        |
-| `description` | string                     | No       | -          | Description (supports Markdown)                        |
-| `snippet`     | string \| string[]         | Yes      | -          | Template string or function (supports multiline array) |
-| `type`        | `text` \| `function`       | No       | `text`     | Rule type                                              |
-| `fileType`    | string[]                   | No       | `["*"]`    | Language identifiers (e.g., `["javascript"]`)          |
-| `replaceMode` | `word` \| `line` \| `file` | No       | `word`     | Replacement scope (word / current line / entire file)  |
-| `pattern`     | string                     | No       | `(\S+)$`   | Regex to match text before cursor (trailing dot is stripped before matching) |
+| Property      | Type                       | Required | Default  | Description                                                                  |
+| ------------- | -------------------------- | -------- | -------- | ---------------------------------------------------------------------------- |
+| `trigger`     | string                     | Yes      | -        | Trigger keyword                                                              |
+| `description` | string                     | No       | -        | Description (supports Markdown)                                              |
+| `snippet`     | string \| string[]         | Yes      | -        | Template string or function (supports multiline array)                       |
+| `type`        | `text` \| `function`       | No       | `text`   | Rule type                                                                    |
+| `fileType`    | string[]                   | No       | `["*"]`  | Language identifiers (e.g., `["javascript"]`)                                |
+| `replaceMode` | `word` \| `line` \| `file` | No       | `word`   | Replacement scope (word / current line / entire file)                        |
+| `pattern`     | string                     | No       | `(\S+)$` | Regex to match text before cursor (trailing dot is stripped before matching) |
 
 ---
 
 ## Rule Types
+
+**Placeholder:** `#variable^formatFunction#`
 
 **Environment Variables**
 
@@ -95,19 +83,7 @@ Configure `dot-anything.rules` in VS Code settings.
 | `lineText`        | Current line text          |
 | `workspaceFolder` | Workspace folder path      |
 
-**Placeholder:** `#variable^formatFunction#`
-
-**Example:**
-
-```json
-{
-    "trigger": "log",
-    "description": "Insert console.log",
-    "snippet": "console.log('#word#', #word#)"
-}
-```
-
-Type `abc.` → select `log` → get `console.log('abc', abc)`
+**Format Functions**
 
 | Description                                        | text Mode                 | function Mode          | Example                                                      |
 | -------------------------------------------------- | ------------------------- | ---------------------- | ------------------------------------------------------------ |
@@ -128,15 +104,15 @@ Use placeholders with optional format suffixes.
 
 **Example:**
 
-`abc.log -> console.log('abc',abc)`
-
-```json
+```
 {
     "trigger": "log",
     "description": "Insert console.log",
     "fileType": ["javascript", "typescript"],
-    "snippet": "console.log('#word#', #word#)"
+    "snippet": "console.log('#word^toUpperCase#', #word#)"
 }
+
+abc.log -> console.log('ABC',abc)
 ```
 
 ---
@@ -155,51 +131,46 @@ Use JavaScript for complex transformations.
 **Examples:**
 
 ```
-ccc.log -> console.log('[/home/1.js:23] ccc:', ccc)
-```
-
-```json
 {
     "trigger": "log",
     "description": "Insert console.log with file info",
     "type": "function",
-    "snippet": "(env, { fns }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
-}
-```
-
-```
-abc.getter ->
-
-_abc: 1,
-get Abc() {
-    return this._abc;
-},
-set Abc(v) {
-    this._abc = v;
+    "snippet": "(env, { fns }) => `console.log('[${env.fileName}:${env.lineNumber}] ${fns.toUpperCase(env.word)}:', ${env.word})`"
 }
 
+abc.log -> console.log('[demo:23] ABC:', abc)
 ```
 
-```json
+```
 {
-    "dot-anything.rules": [
-        {
-            "trigger": "getter",
-            "description": "Generate getter/setter methods",
-            "type": "function",
-            "snippet": [
-                "(env, { fns }) => `\\",
-                "_${env.word}: 1,",
-                "get ${fns.toPascalCase(env.word)}() {",
-                "    return this._${env.word};",
-                "},",
-                "set ${fns.toPascalCase(env.word)}(v) {",
-                "    this._${env.word} = v;",
-                "}`"
-            ]
-        }
+    "trigger": "getter",
+    "description": "Generate getter/setter methods",
+    "type": "function",
+    "snippet": [
+        "(env, { fns }) => `\\",
+        "{",
+        "    _${env.word}: 1,",
+        "    get ${fns.toPascalCase(env.word)}() {",
+        "        return this._${env.word};",
+        "    },",
+        "    set ${fns.toPascalCase(env.word)}(v) {",
+        "        this._${env.word} = v;",
+        "    }",
+        "}`"
     ]
 }
+
+
+abc.getter ->  {
+                   _abc: 1,
+                   get Abc() {
+                       return this._abc;
+                   },
+                   set Abc(v) {
+                       this._abc = v;
+                   }
+               }
+
 ```
 
 ---
@@ -263,10 +234,10 @@ Use `#✏️#` syntax in snippets to define editable cursor positions with Tab n
 **Result:**
 
 1. Type `demo.cases` → select rule
-2. Insert `kebab: name^toKebabCase, camel: name^toCamelCase, snake: name^toSnakeCase`, cursor selects `name`
+2. Insert `kebab: name^toKebabCase, camel: name^toCamelCase, hook: name^reactHook`, cursor selects `name`
 3. Edit to `hello world`
 4. Press Tab to jump
-5. Auto-convert to `kebab: hello-world, camel: helloWorld, snake: hello_world` (different modifiers applied to each position)
+5. Auto-convert to `kebab: hello-world, camel: helloWorld, hook: useHello world` (different modifiers applied to each position)
 
 ### Modifier List
 
@@ -357,12 +328,12 @@ Type `16.` → select `px` → get `16px`. Non-digit input won't trigger this ru
 
 **Access capture groups via `match`:**
 
-| Syntax             | Description                       | Example (pattern `(hello) (world)`)        |
-| ------------------ | --------------------------------- | ------------------------------------------ |
-| `#match#`          | All groups joined by comma        | `hello world,hello,world`                  |
-| `#match.N#`        | Specific capture group (by index) | `#match.1#` → `hello`                      |
-| `#match.N^format#` | Apply format function to group N  | `#match.1^toUpperCase#` → `HELLO`          |
-| `env.match[N]`     | Access in function mode           | `env.match[2]` → `world`                  |
+| Syntax             | Description                       | Example (pattern `(hello) (world)`) |
+| ------------------ | --------------------------------- | ----------------------------------- |
+| `#match#`          | All groups joined by comma        | `hello world,hello,world`           |
+| `#match.N#`        | Specific capture group (by index) | `#match.1#` → `hello`               |
+| `#match.N^format#` | Apply format function to group N  | `#match.1^toUpperCase#` → `HELLO`   |
+| `env.match[N]`     | Access in function mode           | `env.match[2]` → `world`            |
 
 ```json
 {
@@ -460,7 +431,6 @@ Full list: [VS Code Language Identifiers](https://code.visualstudio.com/docs/lan
                 "}"
             ]
         },
-        // pattern mode
         {
             "trigger": "//",
             "description": "Comment out the whole line",

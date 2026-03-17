@@ -50,19 +50,21 @@
 
 ### 规则属性
 
-| 属性          | 类型                       | 必填 | 默认值     | 说明                                     |
-| ------------- | -------------------------- | ---- | ---------- | ---------------------------------------- |
-| `trigger`     | string                     | 是   | -          | 触发关键词                               |
-| `description` | string                     | 否   | -          | 描述（支持 Markdown）                    |
-| `snippet`     | string \| string[]         | 是   | -          | 模板字符串或函数 (支持数组的多行形式)    |
-| `type`        | `text` \| `function`       | 否   | `text`     | 规则类型                                 |
-| `fileType`    | string[]                   | 否   | `["*"]`    | 语言标识符（如 `["javascript"]`）        |
-| `replaceMode` | `word` \| `line` \| `file` | 否   | `word`     | 替换范围（单词 / 当前行 / 整个文件）     |
-| `pattern`     | string                     | 否   | `(\S+)$`   | 正则表达式，匹配光标前文本（末尾 `.` 已去除） |
+| 属性          | 类型                       | 必填 | 默认值   | 说明                                          |
+| ------------- | -------------------------- | ---- | -------- | --------------------------------------------- |
+| `trigger`     | string                     | 是   | -        | 触发关键词                                    |
+| `description` | string                     | 否   | -        | 描述（支持 Markdown）                         |
+| `snippet`     | string \| string[]         | 是   | -        | 模板字符串或函数 (支持数组的多行形式)         |
+| `type`        | `text` \| `function`       | 否   | `text`   | 规则类型                                      |
+| `fileType`    | string[]                   | 否   | `["*"]`  | 语言标识符（如 `["javascript"]`）             |
+| `replaceMode` | `word` \| `line` \| `file` | 否   | `word`   | 替换范围（单词 / 当前行 / 整个文件）          |
+| `pattern`     | string                     | 否   | `(\S+)$` | 正则表达式，匹配光标前文本（末尾 `.` 已去除） |
 
 ---
 
 ## 规则类型
+
+**占位符：** `#环境变量^格式函数#`
 
 **环境变量**
 
@@ -81,19 +83,7 @@
 | `lineText`        | 当前行文本         |
 | `workspaceFolder` | 工作区路径         |
 
-**占位符：** `#环境变量^格式函数#`
-
-**示例：**
-
-```json
-{
-    "trigger": "log",
-    "description": "插入 console.log",
-    "snippet": "console.log('#word#', #word#)"
-}
-```
-
-输入 `abc.` → 选择 `log` → 得到 `console.log('abc', abc)`
+**格式函数**
 
 | 说明                           | text 模式                 | function 模式          | 示例                                                         |
 | ------------------------------ | ------------------------- | ---------------------- | ------------------------------------------------------------ |
@@ -114,15 +104,15 @@
 
 **示例：**
 
-`abc.log -> console.log('abc',abc)`
-
-```json
+```
 {
     "trigger": "log",
     "description": "插入 console.log",
     "fileType": ["javascript", "typescript"],
-    "snippet": "console.log('#word#', #word#)"
+    "snippet": "console.log('#word^toUpperCase#', #word#)"
 }
+
+abc.log -> console.log('ABC',abc)
 ```
 
 ---
@@ -141,51 +131,46 @@
 **示例：**
 
 ```
-ccc.log -> console.log('[/home/1.js:23] ccc:', ccc)
-```
-
-```json
 {
     "trigger": "log",
     "description": "插入带文件信息的 console.log",
     "type": "function",
-    "snippet": "(env, { fns }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
-}
-```
-
-```
-abc.getter ->
-
-_abc: 1,
-get Abc() {
-    return this._abc;
-},
-set Abc(v) {
-    this._abc = v;
+    "snippet": "(env, { fns }) => `console.log('[${env.fileName}:${env.lineNumber}] ${fns.toUpperCase(env.word)}:', ${env.word})`"
 }
 
+abc.log -> console.log('[demo:23] ABC:', abc)
 ```
 
-```json
+```
 {
-    "dot-anything.rules": [
-        {
-            "trigger": "getter",
-            "description": "生成 getter setter 方法",
-            "type": "function",
-            "snippet": [
-                "(env, { fns }) => `\\",
-                "_${env.word}: 1,",
-                "get ${fns.toPascalCase(env.word)}() {",
-                "    return this._${env.word};",
-                "},",
-                "set ${fns.toPascalCase(env.word)}(v) {",
-                "    this._${env.word} = v;",
-                "}`"
-            ]
-        }
+    "trigger": "getter",
+    "description": "生成 getter setter 方法",
+    "type": "function",
+    "snippet": [
+        "(env, { fns }) => `\\",
+        "{",
+        "    _${env.word}: 1,",
+        "    get ${fns.toPascalCase(env.word)}() {",
+        "        return this._${env.word};",
+        "    },",
+        "    set ${fns.toPascalCase(env.word)}(v) {",
+        "        this._${env.word} = v;",
+        "    }",
+        "}`"
     ]
 }
+
+
+abc.getter ->  {
+                   _abc: 1,
+                   get Abc() {
+                       return this._abc;
+                   },
+                   set Abc(v) {
+                       this._abc = v;
+                   }
+               }
+
 ```
 
 ---
@@ -249,10 +234,10 @@ set Abc(v) {
 **效果：**
 
 1. 输入 `demo.cases` → 选择规则
-2. 插入 `kebab: name^toKebabCase, camel: name^toCamelCase, snake: name^toSnakeCase`，光标选中 `name`
+2. 插入 `kebab: name^toKebabCase, camel: name^toCamelCase, hook: name^reactHook`，光标选中 `name`
 3. 编辑为 `hello world`
 4. 按 Tab 跳转
-5. 自动转换为 `kebab: hello-world, camel: helloWorld, snake: hello_world`（三个位置分别应用不同的修饰符）
+5. 自动转换为 `kebab: hello-world, camel: helloWorld, hook: useHello world`（三个位置分别应用不同的修饰符）
 
 ### 修饰符列表
 
@@ -343,12 +328,12 @@ set Abc(v) {
 
 **通过 `match` 访问捕获组：**
 
-| 语法               | 说明                     | 示例（pattern `(hello) (world)`）   |
-| ------------------ | ------------------------ | ----------------------------------- |
-| `#match#`          | 所有匹配组逗号拼接       | `hello world,hello,world`           |
-| `#match.N#`        | 指定捕获组（N 为索引）   | `#match.1#` → `hello`               |
-| `#match.N^format#` | 对指定捕获组应用格式函数 | `#match.1^toUpperCase#` → `HELLO`   |
-| `env.match[N]`     | 函数模式中访问           | `env.match[2]` → `world`            |
+| 语法               | 说明                     | 示例（pattern `(hello) (world)`） |
+| ------------------ | ------------------------ | --------------------------------- |
+| `#match#`          | 所有匹配组逗号拼接       | `hello world,hello,world`         |
+| `#match.N#`        | 指定捕获组（N 为索引）   | `#match.1#` → `hello`             |
+| `#match.N^format#` | 对指定捕获组应用格式函数 | `#match.1^toUpperCase#` → `HELLO` |
+| `env.match[N]`     | 函数模式中访问           | `env.match[2]` → `world`          |
 
 ```json
 {
@@ -446,7 +431,6 @@ set Abc(v) {
                 "}"
             ]
         },
-        // pattern 模式
         {
             "trigger": "//",
             "description": "将整行转为注释",
