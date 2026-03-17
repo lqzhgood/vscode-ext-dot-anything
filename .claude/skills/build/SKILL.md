@@ -1,7 +1,7 @@
 ---
 name: build
 description: 发版流程：确认改动、升版本号、生成 plan 文档、更新 CHANGELOG 和 README、构建 VSIX、commit 并打 git tag
-allowed-tools: Read, Edit, Write, Bash, Grep, Glob
+allowed-tools: Read, Edit, Write, Bash(git *), Bash(npm run *), Bash(ls *), Grep, Glob
 ---
 
 请执行以下发版流程：
