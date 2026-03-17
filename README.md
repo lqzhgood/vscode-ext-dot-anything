@@ -34,15 +34,29 @@ Press `.` to transform text into anything, with custom function support.
 {
     "dot-anything.rules": [
         {
-            "trigger": "upper",
-            "description": "To UPPER_CASE",
-            "snippet": "#word^toUpperCase#"
+            "trigger": "log",
+            "type": "function",
+            "description": "Insert console.log (with file location)",
+            "snippet": "(env) => `console.log('[${env.fileName}:${env.lineNumber}:${env.column}] ${env.word}:', ${env.word})`"
+        },
+        {
+            "trigger": "hook",
+            "description": "Generate React Hook name",
+            "snippet": "#word^reactHook#"
+        }
+    ],
+    "dot-anything.fns": [
+        {
+            "name": "reactHook",
+            "fn": "(s, { fns }) => `use${fns.toPascalCase(s)}`"
         }
     ]
 }
 ```
 
-Type `helloWorld.` → select `upper` → get `HELLOWORLD`
+In `app.ts` line 12, type `name.` → select `log` → get `console.log('[app:12:5] name:', name)`
+
+Type `dark mode.` → select `hook` → get `useDarkMode`
 
 ## Configuration
 
@@ -52,12 +66,13 @@ Configure `dot-anything.rules` in VS Code settings.
 
 | Property      | Type                       | Required | Default | Description                                            |
 | ------------- | -------------------------- | -------- | ------- | ------------------------------------------------------ |
-| `trigger`     | string                     | Yes      | -       | Trigger keyword                                        |
-| `description` | string                     | No       | -       | Description (supports Markdown)                        |
-| `snippet`     | string \| string[]         | Yes      | -       | Template string or function (supports multiline array) |
-| `type`        | `text` \| `function`       | No       | `text`  | Rule type                                              |
-| `fileType`    | string[]                   | No       | `["*"]` | Language identifiers (e.g., `["javascript"]`)          |
-| `replaceMode` | `word` \| `line` \| `file` | No       | `word`  | Replacement scope (word / current line / entire file)  |
+| `trigger`     | string                     | Yes      | -          | Trigger keyword                                        |
+| `description` | string                     | No       | -          | Description (supports Markdown)                        |
+| `snippet`     | string \| string[]         | Yes      | -          | Template string or function (supports multiline array) |
+| `type`        | `text` \| `function`       | No       | `text`     | Rule type                                              |
+| `fileType`    | string[]                   | No       | `["*"]`    | Language identifiers (e.g., `["javascript"]`)          |
+| `replaceMode` | `word` \| `line` \| `file` | No       | `word`     | Replacement scope (word / current line / entire file)  |
+| `pattern`     | string                     | No       | `(\S+)$`   | Regex to match text before cursor (trailing dot is stripped before matching) |
 
 ---
 
@@ -68,6 +83,7 @@ Configure `dot-anything.rules` in VS Code settings.
 | Variable          | Description                |
 | ----------------- | -------------------------- |
 | `word`            | Input text (before `.`)    |
+| `match`           | Regex capture groups array |
 | `filePath`        | Full file path             |
 | `fileName`        | File name (no extension)   |
 | `fileBase`        | File name (with extension) |
@@ -85,13 +101,13 @@ Configure `dot-anything.rules` in VS Code settings.
 
 ```json
 {
-    "trigger": "comment",
-    "description": "Comment current line",
-    "snippet": "// #lineText#"
+    "trigger": "log",
+    "description": "Insert console.log",
+    "snippet": "console.log('#word#', #word#)"
 }
 ```
 
-Type `helloWorld.` → select `comment` → get `// helloWorld`
+Type `abc.` → select `log` → get `console.log('abc', abc)`
 
 | Description                                        | text Mode                 | function Mode          | Example                                                      |
 | -------------------------------------------------- | ------------------------- | ---------------------- | ------------------------------------------------------------ |
@@ -294,16 +310,70 @@ Control the scope of text replaced when a completion item is accepted via `repla
 
 ```json
 {
-    "trigger": "comment",
+    "trigger": "//",
     "description": "Comment out the whole line",
+    "pattern": "",
     "replaceMode": "line",
     "snippet": "// #lineText#"
 }
 ```
 
-Type `abc def.` → select `comment` → entire line becomes `// abc def`
+Type `abc def.` → select `//` → entire line becomes `// abc def`
 
 > **Note:** The formatted result (snippet output) is unchanged regardless of `replaceMode`. Only the replacement range changes. Default is `word`, fully backwards-compatible.
+
+---
+
+## Pattern Matching
+
+By default, rules trigger when you type `word.` (matching `(\S+)$` on the text before the dot). Use the `pattern` property to customize the trigger regex per rule.
+
+**Trigger without word:**
+
+```json
+{
+    "trigger": "//",
+    "description": "Comment out the whole line",
+    "pattern": "",
+    "replaceMode": "line",
+    "snippet": "// #lineText#"
+}
+```
+
+Just type `.` to trigger — no word needed before the dot.
+
+**Match only digits:**
+
+```json
+{
+    "trigger": "px",
+    "description": "Convert number to px",
+    "pattern": "(\\d+)$",
+    "snippet": "#word#px"
+}
+```
+
+Type `16.` → select `px` → get `16px`. Non-digit input won't trigger this rule.
+
+**Access capture groups via `match`:**
+
+| Syntax             | Description                       | Example (pattern `(hello) (world)`)        |
+| ------------------ | --------------------------------- | ------------------------------------------ |
+| `#match#`          | All groups joined by comma        | `hello world,hello,world`                  |
+| `#match.N#`        | Specific capture group (by index) | `#match.1#` → `hello`                      |
+| `#match.N^format#` | Apply format function to group N  | `#match.1^toUpperCase#` → `HELLO`          |
+| `env.match[N]`     | Access in function mode           | `env.match[2]` → `world`                  |
+
+```json
+{
+    "trigger": "swap",
+    "description": "Swap two words",
+    "pattern": "(\\w+)\\s+(\\w+)$",
+    "snippet": "#match.2# #match.1#"
+}
+```
+
+Type `hello world.` → select `swap` → get `world hello`
 
 ---
 
@@ -389,6 +459,14 @@ Full list: [VS Code Language Identifiers](https://code.visualstudio.com/docs/lan
                 "    return;",
                 "}"
             ]
+        },
+        // pattern mode
+        {
+            "trigger": "//",
+            "description": "Comment out the whole line",
+            "pattern": "",
+            "replaceMode": "line",
+            "snippet": "// #lineText#"
         },
         // function mode
         {

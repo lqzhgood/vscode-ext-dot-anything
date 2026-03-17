@@ -34,15 +34,15 @@
 {
     "dot-anything.rules": [
         {
-            "trigger": "upper",
-            "description": "转大写",
-            "snippet": "#word^toUpperCase#"
+            "trigger": "log",
+            "description": "插入 console.log（含文件位置）",
+            "snippet": "console.log('🖨️ #filePath#[#lineNumber#:#column#] #word^toKebabCase#:', #word#);"
         }
     ]
 }
 ```
 
-输入 `helloWorld.` → 选择 `upper` → 得到 `HELLOWORLD`
+输入 `HelloWorld.` → 选择 `log` → 得到 `console.log('🖨️ /home/demo.js[15:12] hello-world:', HelloWorld);`
 
 ## 配置
 
@@ -50,14 +50,15 @@
 
 ### 规则属性
 
-| 属性          | 类型                       | 必填 | 默认值  | 说明                                  |
-| ------------- | -------------------------- | ---- | ------- | ------------------------------------- |
-| `trigger`     | string                     | 是   | -       | 触发关键词                            |
-| `description` | string                     | 否   | -       | 描述（支持 Markdown）                 |
-| `snippet`     | string \| string[]         | 是   | -       | 模板字符串或函数 (支持数组的多行形式) |
-| `type`        | `text` \| `function`       | 否   | `text`  | 规则类型                              |
-| `fileType`    | string[]                   | 否   | `["*"]` | 语言标识符（如 `["javascript"]`）     |
-| `replaceMode` | `word` \| `line` \| `file` | 否   | `word`  | 替换范围（单词 / 当前行 / 整个文件）  |
+| 属性          | 类型                       | 必填 | 默认值     | 说明                                     |
+| ------------- | -------------------------- | ---- | ---------- | ---------------------------------------- |
+| `trigger`     | string                     | 是   | -          | 触发关键词                               |
+| `description` | string                     | 否   | -          | 描述（支持 Markdown）                    |
+| `snippet`     | string \| string[]         | 是   | -          | 模板字符串或函数 (支持数组的多行形式)    |
+| `type`        | `text` \| `function`       | 否   | `text`     | 规则类型                                 |
+| `fileType`    | string[]                   | 否   | `["*"]`    | 语言标识符（如 `["javascript"]`）        |
+| `replaceMode` | `word` \| `line` \| `file` | 否   | `word`     | 替换范围（单词 / 当前行 / 整个文件）     |
+| `pattern`     | string                     | 否   | `(\S+)$`   | 正则表达式，匹配光标前文本（末尾 `.` 已去除） |
 
 ---
 
@@ -68,6 +69,7 @@
 | 环境变量          | 说明               |
 | ----------------- | ------------------ |
 | `word`            | 输入文本（`.` 前） |
+| `match`           | 正则匹配捕获组数组 |
 | `filePath`        | 文件完整路径       |
 | `fileName`        | 文件名（无扩展名） |
 | `fileBase`        | 文件名（含扩展名） |
@@ -85,13 +87,13 @@
 
 ```json
 {
-    "trigger": "comment",
-    "description": "注释当前行",
-    "snippet": "// #lineText#"
+    "trigger": "log",
+    "description": "插入 console.log",
+    "snippet": "console.log('#word#', #word#)"
 }
 ```
 
-输入 `helloWorld.` → 选择 `comment` → 得到 `// helloWorld`
+输入 `abc.` → 选择 `log` → 得到 `console.log('abc', abc)`
 
 | 说明                           | text 模式                 | function 模式          | 示例                                                         |
 | ------------------------------ | ------------------------- | ---------------------- | ------------------------------------------------------------ |
@@ -294,16 +296,70 @@ set Abc(v) {
 
 ```json
 {
-    "trigger": "comment",
+    "trigger": "//",
     "description": "将整行转为注释",
+    "pattern": "",
     "replaceMode": "line",
     "snippet": "// #lineText#"
 }
 ```
 
-输入 `abc def.` → 选择 `comment` → 整行变为 `// abc def`
+输入 `abc def.` → 选择 `//` → 整行变为 `// abc def`
 
 > **注意：** 格式化结果（snippet 输出）不受 `replaceMode` 影响，仅替换范围不同。默认值为 `word`，与旧版行为完全兼容。
+
+---
+
+## 正则匹配（pattern）
+
+默认情况下，规则在输入 `word.` 时触发（对 `.` 前的文本匹配 `(\S+)$`）。通过 `pattern` 属性可以为每条规则自定义触发正则。
+
+**无 word 触发：**
+
+```json
+{
+    "trigger": "//",
+    "description": "将整行转为注释",
+    "pattern": "",
+    "replaceMode": "line",
+    "snippet": "// #lineText#"
+}
+```
+
+只需输入 `.` 即可触发，无需在 `.` 前输入任何单词。
+
+**仅匹配数字：**
+
+```json
+{
+    "trigger": "px",
+    "description": "数字转 px",
+    "pattern": "(\\d+)$",
+    "snippet": "#word#px"
+}
+```
+
+输入 `16.` → 选择 `px` → 得到 `16px`。非数字输入不会触发此规则。
+
+**通过 `match` 访问捕获组：**
+
+| 语法               | 说明                     | 示例（pattern `(hello) (world)`）   |
+| ------------------ | ------------------------ | ----------------------------------- |
+| `#match#`          | 所有匹配组逗号拼接       | `hello world,hello,world`           |
+| `#match.N#`        | 指定捕获组（N 为索引）   | `#match.1#` → `hello`               |
+| `#match.N^format#` | 对指定捕获组应用格式函数 | `#match.1^toUpperCase#` → `HELLO`   |
+| `env.match[N]`     | 函数模式中访问           | `env.match[2]` → `world`            |
+
+```json
+{
+    "trigger": "swap",
+    "description": "交换两个单词",
+    "pattern": "(\\w+)\\s+(\\w+)$",
+    "snippet": "#match.2# #match.1#"
+}
+```
+
+输入 `hello world.` → 选择 `swap` → 得到 `world hello`
 
 ---
 
@@ -390,8 +446,15 @@ set Abc(v) {
                 "}"
             ]
         },
+        // pattern 模式
+        {
+            "trigger": "//",
+            "description": "将整行转为注释",
+            "pattern": "",
+            "replaceMode": "line",
+            "snippet": "// #lineText#"
+        },
         // function 模式
-
         {
             "trigger": "log",
             "description": "插入带文件信息的 console.log",

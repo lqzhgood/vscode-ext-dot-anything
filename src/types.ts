@@ -10,20 +10,23 @@ export interface Rule {
     type?: 'function' | 'text';
     snippet: string | string[];
     replaceMode?: 'word' | 'line' | 'file';
+    pattern?: string;
 }
 
 export interface InnerRule extends Omit<
     Rule,
-    'type' | 'snippet' | 'replaceMode'
+    'type' | 'snippet' | 'replaceMode' | 'pattern'
 > {
     type: 'function' | 'text';
     snippetStr: string;
     replaceMode: 'word' | 'line' | 'file';
+    patternRegex: RegExp;
     fn?: (envVars: EnvVars, ctx: { fns: Record<string, any> }) => string;
 }
 
 export type EnvVars = {
     word: string;
+    match: string[];
     lineText: string;
     fileName: string;
     fileBase: string;

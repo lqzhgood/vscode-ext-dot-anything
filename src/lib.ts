@@ -30,13 +30,23 @@ class ConfigCache {
 
     getRules(): InnerRule[] {
         if (!this.rules) {
-            this.rules = this.getConfig<Rule[]>('rules', []).map(v => {
-                const r = {
+            const parsed: InnerRule[] = [];
+            for (const v of this.getConfig<Rule[]>('rules', [])) {
+                let patternRegex: RegExp;
+                try {
+                    patternRegex = new RegExp(v.pattern ?? '(\\S+)$');
+                } catch (err) {
+                    LOG.err(`Invalid pattern in rule "${v.trigger}": ${err}`);
+                    continue;
+                }
+
+                const r: InnerRule = {
                     fileType: v.fileType ?? '*',
                     type: v.type ?? 'text',
                     trigger: v.trigger,
                     description: v.description,
                     replaceMode: v.replaceMode ?? 'word',
+                    patternRegex,
                     snippetStr: Array.isArray(v.snippet)
                         ? v.snippet.join('\n')
                         : v.snippet,
@@ -53,8 +63,9 @@ class ConfigCache {
                     }
                 }
 
-                return r;
-            });
+                parsed.push(r);
+            }
+            this.rules = parsed;
         }
         return this.rules;
     }
@@ -133,6 +144,8 @@ export function getFns(): Record<string, any> {
     return configCache.getFns();
 }
 
+const Delimiter = ',';
+
 export function applyFormat(rule: InnerRule, envVars: EnvVars): ParsedSnippet {
     const fns = getFns();
     let result: string;
@@ -141,19 +154,49 @@ export function applyFormat(rule: InnerRule, envVars: EnvVars): ParsedSnippet {
         result = rule.fn!(envVars, { fns });
     } else {
         // 单次正则替换所有 #key# 和 #key^format# 模式
-        const envMap = envVars as Record<string, string>;
+        const envMap = envVars as unknown as Record<string, string | string[]>;
         result = rule.snippetStr.replace(
             /#([^#^]+?)(?:\^([^#]+))?#/g,
-            (match, key: string, format: string | undefined) => {
-                const value = envMap[key];
-                if (value === undefined) {
-                    return match;
+            (orig, key: string, format: string | undefined) => {
+                // key.N → 数组索引访问
+                const dotIdx = key.match(/^(.+?)\.(\d+)$/);
+                const baseKey = dotIdx ? dotIdx[1] : key;
+                const rawValue = envMap[baseKey];
+                if (rawValue === undefined) {
+                    return orig;
+                }
+
+                if (Array.isArray(rawValue)) {
+                    if (dotIdx) {
+                        // #arr.N# / #arr.N^format#
+                        const val = rawValue[Number(dotIdx[2])] ?? '';
+                        if (!format) {
+                            return val;
+                        }
+                        const fn = fns[format];
+                        return fn ? fn(val, { fns }) : orig;
+                    }
+                    // #arr# / #arr^format#
+                    if (!format) {
+                        LOG.info('11111', rawValue, rawValue.length);
+                        return rawValue.join(Delimiter);
+                    }
+                    const fn = fns[format];
+                    return fn
+                        ? rawValue
+                              .map((v: string) => fn(v, { fns }))
+                              .join(Delimiter)
+                        : orig;
+                }
+
+                if (dotIdx) {
+                    return orig;
                 }
                 if (!format) {
-                    return value;
+                    return rawValue;
                 }
                 const fn = fns[format];
-                return fn ? fn(value, { fns }) : match;
+                return fn ? fn(rawValue, { fns }) : orig;
             },
         );
     }

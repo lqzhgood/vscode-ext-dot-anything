@@ -130,27 +130,26 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
                 const lineText = document.lineAt(position).text;
                 const textBeforeCursor = lineText.slice(0, position.character);
 
-                // 匹配 `.` 前的输入词
-                const match = textBeforeCursor.match(/(\S+)\.$/);
-                if (!match) {
-                    LOG.dev('no match, skipping');
+                const trigger = textBeforeCursor.at(-1);
+                if (trigger !== '.' && trigger !== '。') {
                     return undefined;
                 }
+                const textToMatch = textBeforeCursor.slice(0, -1);
 
-                const word = match[1];
                 const languageId = document.languageId;
                 const rules = getRules();
 
-                // 构建环境变量
+                // 构建不依赖 per-rule 匹配的基础环境变量
                 const workspaceFolders = vscode.workspace.workspaceFolders;
                 const workspaceFolder =
                     workspaceFolders?.[0]?.uri?.fsPath ?? '';
 
                 const { name, ext, base, dir } = path.parse(document.fileName);
 
-                const envVars: EnvVars = {
-                    word: word,
-                    lineText: lineText.slice(0, position.character - 1) + lineText.slice(position.character),
+                const baseEnv = {
+                    lineText:
+                        lineText.slice(0, position.character - 1) +
+                        lineText.slice(position.character),
                     filePath: document.fileName,
                     fileName: name,
                     fileBase: base,
@@ -172,6 +171,21 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
                         continue;
                     }
 
+                    const ruleMatch = textToMatch.match(rule.patternRegex);
+
+                    if (!ruleMatch) {
+                        continue;
+                    }
+
+                    const word = ruleMatch[1] ?? '';
+                    const matchGroups = Array.from(ruleMatch);
+
+                    const envVars: EnvVars = {
+                        ...baseEnv,
+                        word,
+                        match: matchGroups,
+                    };
+
                     let parsed: ParsedSnippet;
                     try {
                         parsed = applyFormat(rule, envVars);
@@ -189,8 +203,9 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
                         rule.description ?? '',
                     );
 
-                    // word range：始终只覆盖 `word.` 部分，确保 VS Code 过滤正常
-                    const startChar = position.character - word.length - 1;
+                    // wordRange 基于完整匹配长度
+                    const startChar =
+                        position.character - ruleMatch[0].length - 1;
                     const replaceMode = rule.replaceMode;
                     const wordRange = new vscode.Range(
                         new vscode.Position(position.line, startChar),
@@ -246,7 +261,7 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
                         item.insertText = parsed.snippet;
                     }
 
-                    item.filterText = word + '.' + rule.trigger;
+                    item.filterText = ruleMatch[0] + '.' + rule.trigger;
                     item.sortText = String(items.length).padStart(6, '0');
 
                     items.push(item);
@@ -257,6 +272,7 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
             },
         },
         '.',
+        '。',
     );
 }
 
