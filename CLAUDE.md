@@ -2,78 +2,88 @@
 
 请始终使用简体中文与我对话，并在回答时保持专业、简洁
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+本文件为 Claude Code (claude.ai/code) 在本仓库中工作时提供指导。
 
-## Commands
+## 环境要求
+
+Node.js 22.x, VS Code 1.103.0+
+
+## 常用命令
 
 ```bash
-# Development build (type-check + lint + esbuild)
+# 开发构建（类型检查 + lint + esbuild）
 npm run compile
 
-# Watch mode (esbuild + tsc in parallel)
+# 监听模式（esbuild + tsc 并行）
 npm run watch
 
-# Production build (minified, no sourcemaps)
+# 生产构建（压缩、无 sourcemap）
 npm run package
 
-# Type checking only
+# 仅类型检查
 npm run check-types
 
-# Lint only
+# 仅 lint
 npm run lint
 
-# Run tests (runs pretest: compile-tests + compile + lint first)
+# 运行测试（预步骤：compile-tests + compile + lint）
 npm test
 
-# Build VSIX package
+# 构建 VSIX 包
 npm run build
 ```
 
-Press `F5` in VS Code to launch the Extension Development Host using the `Run Extension` launch config (runs default build task first).
+在 VS Code 中按 `F5` 启动扩展开发宿主（使用 `Run Extension` 启动配置，会先运行默认构建任务）。
 
-## Architecture
+## 架构
 
-This is a VS Code extension ("dot-anything") that provides dot-triggered completion items to transform text using configurable format rules.
+这是一个 VS Code 扩展（"dot-anything"），通过点号触发补全项，使用可配置的格式规则转换文本。
 
-**Entry point**: `src/extension.ts` → bundled by esbuild to `dist/extension.js` (CJS, Node platform, `vscode` externalized).
+**入口文件**：`src/extension.ts` → 由 esbuild 打包为 `dist/extension.js`（CJS 格式、Node 平台、`vscode` 外部化）。
 
-**Build pipeline**:
+**构建流水线**：
 
-- esbuild (`esbuild.js`) bundles `src/extension.ts` → `dist/extension.js`
-- Tests are compiled separately via `tsc` to `out/` and run with `@vscode/test-cli` (config in `.vscode-test.mjs`)
-- `tsconfig.json` uses `rootDir: src`, `module: Node16`, `target: ES2022`, strict mode
+- esbuild（`esbuild.js`）打包 `src/extension.ts` → `dist/extension.js`
+- 测试通过 `tsc` 单独编译到 `out/`，由 `@vscode/test-cli` 运行（配置见 `.vscode-test.mjs`）
+- `tsconfig.json` 使用 `rootDir: src`、`module: Node16`、`target: ES2022`、严格模式
 
-**Configuration namespace**: `dot-anything` (defined in `src/const.ts` as `WORKSPACE`)
+**配置命名空间**：`dot-anything`（定义于 `src/const.ts` 中的 `WORKSPACE`）
 
-**Key files**:
+**关键文件**：
 
-- `src/extension.ts` — `activate()` registers `CompletionItemProvider` triggered by `.`, plus event listeners for config changes, text document changes, selection changes, and editor switches
-- `src/lib.ts` — Core logic: `getRules()`, `applyFormat()`, `isRuleApplicable()`, and `ConfigCache` class for caching configuration
-- `src/cursor.ts` — Cursor placeholder system: `parseCursorPlaceholders()`, `startSnippetSession()`, `handleSelectionChange()`, `updatePlaceholderOffsets()`
-- `src/rules.ts` — Built-in format functions (`toLowerCase`, `toCamelCase`, etc.) exported as `baseQuickRules`
-- `src/types.ts` — `Rule`, `InnerRule`, `EnvVars`, `QuickRule`, `UserFn`, `CursorPlaceholder`, `ParsedSnippet`, `PlaceholderRange`, and `SnippetSession` interfaces
-- `src/utils.ts` — `Logger` class with `info()` (always logs), `dev()` (logs only when `dot-anything.debug` is true), `err()`, and `warn()`
-- `src/const.ts` — `WORKSPACE` constant (`'dot-anything'`)
+- `src/extension.ts` — `activate()` 注册由 `.` 触发的 `CompletionItemProvider`，以及配置变更、文本文档变更、选区变更和编辑器切换的事件监听
+- `src/lib.ts` — 核心逻辑：`getRules()`、`applyFormat()`、`isRuleApplicable()` 和 `ConfigCache` 配置缓存类
+- `src/cursor.ts` — 光标占位符系统：`parseCursorPlaceholders()`、`startSnippetSession()`、`handleSelectionChange()`、`updatePlaceholderOffsets()`
+- `src/rules.ts` — 内置格式化函数（`toLowerCase`、`toCamelCase` 等），导出为 `baseQuickRules`
+- `src/types.ts` — `Rule`、`InnerRule`、`EnvVars`、`QuickRule`、`UserFn`、`CursorPlaceholder`、`ParsedSnippet`、`PlaceholderRange` 和 `SnippetSession` 接口
+- `src/utils.ts` — `Logger` 类：`info()`（始终输出）、`dev()`（仅在 `dot-anything.debug` 为 true 时输出）、`err()` 和 `warn()`
+- `src/const.ts` — `WORKSPACE` 常量（`'dot-anything'`）
 
-**EnvVars** (available in both text and function rules): `word`, `lineText`, `filePath`, `fileName`, `fileBase`, `fileExt`, `fileDir`, `languageId`, `lineNumber`, `column`, `workspaceFolder`.
+**环境变量**（在 text 和 function 规则中均可用）：`word`、`lineText`、`filePath`、`fileName`、`fileBase`、`fileExt`、`fileDir`、`languageId`、`lineNumber`、`column`、`workspaceFolder`。
 
-**Rule processing flow**:
+**规则处理流程**：
 
-1. User types `word.` → triggers completion
-2. `provideCompletionItems()` matches `\S+` before `.`
-3. For each rule in `dot-anything.rules`:
-    - Check `fileType` filter via `isRuleApplicable()`
-    - Apply format via `applyFormat()` → returns `ParsedSnippet`:
-        - `text` type: Replace `#placeholder^format#` patterns (e.g., `#word^toUpperCase#` → uppercase)
-        - `function` type: Execute snippet as JS arrow function with `(env, { fns })` params
-    - `parseCursorPlaceholders()` converts `#✏️index^modifier-comment#` syntax into VS Code snippet format
-4. If result has cursor placeholders, insert as `SnippetString` and track a `SnippetSession` in `cursor.ts`
-5. Selection change events apply `modifier` transforms when leaving a placeholder
+1. 用户输入 `word.` → 触发补全
+2. `provideCompletionItems()` 匹配 `.` 前的 `\S+`
+3. 对 `dot-anything.rules` 中的每条规则：
+    - 通过 `isRuleApplicable()` 检查 `fileType` 过滤
+    - 通过 `applyFormat()` 应用格式 → 返回 `ParsedSnippet`：
+        - `text` 类型：替换 `#placeholder^format#` 模式（如 `#word^toUpperCase#` → 转大写）
+        - `function` 类型：以 `(env, { fns })` 为参数执行 JS 箭头函数
+    - `parseCursorPlaceholders()` 将 `#✏️index^modifier-comment#` 语法转为 VS Code snippet 格式
+4. 如果结果包含光标占位符，则以 `SnippetString` 插入并在 `cursor.ts` 中追踪 `SnippetSession`
+5. 选区变更事件在离开占位符时应用 `modifier` 转换
 
-**Format suffixes** (text mode): `#word#` (raw), `^toLowerCase`, `^toUpperCase`, `^toKebabCase`, `^toSnakeCase`, `^toCamelCase`, `^toPascalCase`, `^toUpperCaseFirst`, `^toCapitalize`, `^toTitleCase`
+**格式后缀**（text 模式）：`#word#`（原始值）、`^toLowerCase`、`^toUpperCase`、`^toKebabCase`、`^toSnakeCase`、`^toCamelCase`、`^toPascalCase`、`^toUpperCaseFirst`、`^toCapitalize`、`^toTitleCase`
 
-**Cursor placeholders**: Snippets can include `#✏️1-comment#` or `#✏️1^modifier-comment#`. These become interactive tab stops with optional modifier transforms applied on tab-out. The session is tracked in `cursor.ts` global state (`activeSession`).
+**光标占位符**：Snippet 中可包含 `#✏️1-comment#` 或 `#✏️1^modifier-comment#`，会变为可交互的制表位，离开时可选应用 modifier 转换。会话状态在 `cursor.ts` 的全局变量 `activeSession` 中追踪。
 
-**Custom functions**: Users can define custom functions via `dot-anything.fns` setting. These override built-in functions with the same name. Custom functions receive `(s, { fns })` where `fns` provides access to built-in formatters.
+**自定义函数**：用户可通过 `dot-anything.fns` 配置自定义函数，同名时覆盖内置函数。自定义函数接收 `(s, { fns })`，其中 `fns` 提供内置格式化方法。
 
-**Configuration caching**: `ConfigCache` class in `lib.ts` caches rules, quickRules, and fns. Cache is cleared and the completion provider is re-registered when `dot-anything.rules` or `dot-anything.fns` configuration changes.
+**配置缓存**：`lib.ts` 中的 `ConfigCache` 类缓存 rules、quickRules 和 fns。当 `dot-anything.rules` 或 `dot-anything.fns` 配置变更时清除缓存并重新注册补全提供器。
+
+## 测试
+
+- 测试文件位于 `src/test/`，使用 Mocha 风格（`suite`/`test`）
+- 测试通过 `tsc` 编译到 `out/test/`，由 `@vscode/test-cli` 在 VS Code 测试环境中运行
+- `npm test` 会先执行预步骤（compile-tests + compile + lint）再运行测试
