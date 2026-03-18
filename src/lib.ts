@@ -60,6 +60,7 @@ class ConfigCache {
                         LOG.err(
                             `Invalid function in rule "${r.trigger}": ${err}`,
                         );
+                        continue;
                     }
                 }
 

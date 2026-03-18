@@ -1,5 +1,15 @@
 # Change Log
 
+## [1.4.2]
+
+- 修复无效 function 规则未被跳过导致运行时 TypeError 的 bug
+- 修复同索引占位符偏移量不同步的问题
+- 修复 `handleSelectionChange` async 竞态问题（await 后 session 可能已被清除）
+- 修复 `fileType` JSON Schema 仅支持数组、不支持字符串的问题
+- 移除 `registerProvider` 未使用的参数
+
+详见 [doc/plan/1.4.2-bug修复.md](doc/plan/1.4.2-bug修复.md)
+
 ## [1.4.0]
 
 - 新增 `pattern` 规则属性，支持 per-rule 自定义正则匹配（如 `"pattern": ""` 实现无 word 触发）

@@ -396,7 +396,25 @@ export function updatePlaceholderOffsets(
         return;
     }
 
-    // 更新插入位置之后的占位符
+    // 找到变化所在的占位符（如果有的话），用于同步同索引占位符
+    let changedPlaceholderIndex: number | null = null;
+
+    for (const placeholder of activeSession.placeholders) {
+        const placeholderStart =
+            activeSession.insertOffset + placeholder.startOffset;
+        const placeholderEnd =
+            activeSession.insertOffset + placeholder.endOffset;
+
+        // 如果变化发生在占位符内部，记录其索引
+        if (
+            changeOffset >= placeholderStart &&
+            changeOffset <= placeholderEnd
+        ) {
+            changedPlaceholderIndex = placeholder.index;
+            break;
+        }
+    }
+
     for (const placeholder of activeSession.placeholders) {
         const placeholderStart =
             activeSession.insertOffset + placeholder.startOffset;
@@ -408,6 +426,19 @@ export function updatePlaceholderOffsets(
             changeOffset >= placeholderStart &&
             changeOffset <= placeholderEnd
         ) {
+            placeholder.endOffset += delta;
+            if (placeholder.modifierEndOffset !== undefined) {
+                placeholder.modifierEndOffset += delta;
+            }
+        }
+        // 同索引的其他占位符也会被 VS Code snippet 同步编辑，需要位移
+        // 注意：内容变化由各占位符自身的 contentChange 事件处理，这里只做位置偏移
+        else if (
+            changedPlaceholderIndex !== null &&
+            placeholder.index === changedPlaceholderIndex &&
+            placeholderStart > changeOffset
+        ) {
+            placeholder.startOffset += delta;
             placeholder.endOffset += delta;
             if (placeholder.modifierEndOffset !== undefined) {
                 placeholder.modifierEndOffset += delta;
@@ -587,6 +618,11 @@ export async function handleSelectionChange(
         if (edits.length > 0) {
             const totalDelta = await applyEdits(editor, edits);
 
+            // await 之后 session 可能已被其他事件清除
+            if (!activeSession) {
+                return;
+            }
+
             // 更新后续占位符的偏移
             if (totalDelta !== 0) {
                 const firstEditStart = edits[edits.length - 1].startOffset;
@@ -600,6 +636,11 @@ export async function handleSelectionChange(
             endSnippetSession();
             return;
         }
+    }
+
+    // await 之后 session 可能已被其他事件清除
+    if (!activeSession) {
+        return;
     }
 
     // 更新追踪状态

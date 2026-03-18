@@ -13,7 +13,6 @@ import {
 } from './cursor';
 
 export function activate(context: vscode.ExtensionContext) {
-    const out = getSingleChannel();
     LOG.info('[activate] extension activated');
 
     // 注册命令：补全项被接受后启动 snippet 会话
@@ -38,7 +37,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     // 监听配置变化，重新注册 provider
-    let disposable = registerProvider(out);
+    let disposable = registerProvider();
     // 使用代理 disposable，避免每次配置变更都往 subscriptions 累积
     context.subscriptions.push({ dispose: () => disposable.dispose() });
 
@@ -55,7 +54,7 @@ export function activate(context: vscode.ExtensionContext) {
             ) {
                 clearCache();
                 disposable.dispose();
-                disposable = registerProvider(out);
+                disposable = registerProvider();
             }
         }),
     );
@@ -119,7 +118,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
 }
 
-function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
+function registerProvider(): vscode.Disposable {
     return vscode.languages.registerCompletionItemProvider(
         '*',
         {

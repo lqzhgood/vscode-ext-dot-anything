@@ -6,7 +6,7 @@
     "author": {
         "name": "lqzh"
     },
-    "version": "1.4.1",
+    "version": "1.4.2",
     "icon": "public/logo_128.png",
     "galleryBanner": {
         "color": "#0D1117",
@@ -89,10 +89,88 @@
                         "type": "object",
                         "properties": {
                             "fileType": {
-                                "type": "array",
-                                "items": {
-                                    "anyOf": [
-                                        {
+                                "anyOf": [
+                                    {
+                                        "type": "string",
+                                        "enum": [
+                                            "*",
+                                            "abap",
+                                            "bat",
+                                            "bibtex",
+                                            "clojure",
+                                            "coffeescript",
+                                            "c",
+                                            "cpp",
+                                            "csharp",
+                                            "dockercompose",
+                                            "css",
+                                            "cuda-cpp",
+                                            "d",
+                                            "dart",
+                                            "pascal",
+                                            "diff",
+                                            "dockerfile",
+                                            "erlang",
+                                            "fsharp",
+                                            "git-commit",
+                                            "git-rebase",
+                                            "go",
+                                            "groovy",
+                                            "handlebars",
+                                            "haml",
+                                            "haskell",
+                                            "html",
+                                            "ini",
+                                            "java",
+                                            "javascript",
+                                            "javascriptreact",
+                                            "json",
+                                            "jsonc",
+                                            "julia",
+                                            "latex",
+                                            "less",
+                                            "lua",
+                                            "makefile",
+                                            "markdown",
+                                            "objective-c",
+                                            "objective-cpp",
+                                            "ocaml",
+                                            "perl",
+                                            "perl6",
+                                            "php",
+                                            "plaintext",
+                                            "powershell",
+                                            "jade",
+                                            "pug",
+                                            "python",
+                                            "r",
+                                            "razor",
+                                            "ruby",
+                                            "rust",
+                                            "scss",
+                                            "sass",
+                                            "shaderlab",
+                                            "shellscript",
+                                            "slim",
+                                            "sql",
+                                            "stylus",
+                                            "svelte",
+                                            "swift",
+                                            "typescript",
+                                            "typescriptreact",
+                                            "tex",
+                                            "vb",
+                                            "vue",
+                                            "vue-html",
+                                            "xml",
+                                            "xsl",
+                                            "yaml"
+                                        ],
+                                        "default": "*"
+                                    },
+                                    {
+                                        "type": "array",
+                                        "items": {
                                             "type": "string",
                                             "enum": [
                                                 "*",
@@ -170,8 +248,8 @@
                                             ],
                                             "default": "*"
                                         }
-                                    ]
-                                },
+                                    }
+                                ],
                                 "description": "support language identifiers, see https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers"
                             },
                             "trigger": {
