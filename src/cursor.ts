@@ -191,8 +191,7 @@ export function parseCursorPlaceholders(snippet: string): ParsedSnippet {
 /**
  * 应用 modifier 转换
  */
-export function applyModifier(text: string, modifier: string): string {
-    const fns = getFns();
+export function applyModifier(text: string, modifier: string, fns: Record<string, any>): string {
     const fn = fns[modifier];
 
     if (!fn) {
@@ -449,6 +448,7 @@ function collectPlaceholderEdits(
         return [];
     }
 
+    const fns = getFns();
     const edits: PlaceholderEdit[] = [];
     const prevPlaceholders = activeSession.placeholders.filter(
         p => p.index === placeholderIndex,
@@ -482,7 +482,7 @@ function collectPlaceholderEdits(
 
             let transformed = content;
             if (prevPlaceholder.modifier && content) {
-                transformed = applyModifier(content, prevPlaceholder.modifier);
+                transformed = applyModifier(content, prevPlaceholder.modifier, fns);
                 LOG.dev(
                     `Applying modifier "${prevPlaceholder.modifier}" to "${content}" -> "${transformed}"`,
                 );

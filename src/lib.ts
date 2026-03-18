@@ -145,9 +145,10 @@ export function getFns(): Record<string, any> {
 }
 
 const Delimiter = ',';
+const PLACEHOLDER_PATTERN = /#([^#^]+?)(?:\^([^#]+))?#/g;
+const DOT_INDEX_PATTERN = /^(.+?)\.(\d+)$/;
 
-export function applyFormat(rule: InnerRule, envVars: EnvVars): ParsedSnippet {
-    const fns = getFns();
+export function applyFormat(rule: InnerRule, envVars: EnvVars, fns: Record<string, any>): ParsedSnippet {
     let result: string;
 
     if (rule.type === 'function') {
@@ -156,10 +157,10 @@ export function applyFormat(rule: InnerRule, envVars: EnvVars): ParsedSnippet {
         // 单次正则替换所有 #key# 和 #key^format# 模式
         const envMap = envVars as unknown as Record<string, string | string[]>;
         result = rule.snippetStr.replace(
-            /#([^#^]+?)(?:\^([^#]+))?#/g,
+            PLACEHOLDER_PATTERN,
             (orig, key: string, format: string | undefined) => {
                 // key.N → 数组索引访问
-                const dotIdx = key.match(/^(.+?)\.(\d+)$/);
+                const dotIdx = key.match(DOT_INDEX_PATTERN);
                 const baseKey = dotIdx ? dotIdx[1] : key;
                 const rawValue = envMap[baseKey];
                 if (rawValue === undefined) {
@@ -178,7 +179,6 @@ export function applyFormat(rule: InnerRule, envVars: EnvVars): ParsedSnippet {
                     }
                     // #arr# / #arr^format#
                     if (!format) {
-                        LOG.info('11111', rawValue, rawValue.length);
                         return rawValue.join(Delimiter);
                     }
                     const fn = fns[format];

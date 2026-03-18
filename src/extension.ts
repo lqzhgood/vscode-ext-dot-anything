@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { EnvVars, ParsedSnippet } from './types';
 import path from 'path';
 import { clearDebugCache, getSingleChannel, LOG } from './utils';
-import { applyFormat, clearCache, getRules, isRuleApplicable } from './lib';
+import { applyFormat, clearCache, getFns, getRules, isRuleApplicable } from './lib';
 import { WORKSPACE } from './const';
 import {
     endSnippetSession,
@@ -161,6 +161,7 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
                     workspaceFolder: workspaceFolder,
                 };
 
+                const fns = getFns();
                 const items: vscode.CompletionItem[] = [];
 
                 for (const rule of rules) {
@@ -188,7 +189,7 @@ function registerProvider(out: vscode.OutputChannel): vscode.Disposable {
 
                     let parsed: ParsedSnippet;
                     try {
-                        parsed = applyFormat(rule, envVars);
+                        parsed = applyFormat(rule, envVars, fns);
                     } catch (err) {
                         LOG.err(`rule "${rule.trigger}" error: ${err}`);
                         continue;

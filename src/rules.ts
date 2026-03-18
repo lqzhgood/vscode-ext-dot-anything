@@ -1,5 +1,13 @@
 import { QuickRule } from './types';
 
+const CAMEL_BOUNDARY = /([a-z])([A-Z])/g;
+const WHITESPACE_UNDERSCORE = /[\s_]+/g;
+const WHITESPACE_HYPHEN = /[\s-]+/g;
+const LEADING_TRAILING_HYPHEN = /^-+|-+$/g;
+const LEADING_TRAILING_UNDERSCORE = /^_+|_+$/g;
+const WHITESPACE_HYPHEN_UNDERSCORE = /[\s-_]+/;
+const WHITESPACE_SPLIT = /(\s+)/;
+
 export function toLowerCase(str = '') {
     return str.toLowerCase();
 }
@@ -19,7 +27,7 @@ export function toCapitalize(str = '') {
 export function toTitleCase(str = '') {
     return str
         .toLowerCase()
-        .split(/(\s+)/)
+        .split(WHITESPACE_SPLIT)
         .map(t =>
             t.trim() === '' ? t : t.charAt(0).toUpperCase() + t.slice(1),
         )
@@ -28,24 +36,24 @@ export function toTitleCase(str = '') {
 
 export function toKebabCase(str = '') {
     return str
-        .replace(/([a-z])([A-Z])/g, '$1-$2')
-        .replace(/[\s_]+/g, '-')
+        .replace(CAMEL_BOUNDARY, '$1-$2')
+        .replace(WHITESPACE_UNDERSCORE, '-')
         .toLowerCase()
-        .replace(/^-+|-+$/g, '');
+        .replace(LEADING_TRAILING_HYPHEN, '');
 }
 
 export function toSnakeCase(str = '') {
     return str
-        .replace(/([a-z])([A-Z])/g, '$1_$2')
-        .replace(/[\s-]+/g, '_')
+        .replace(CAMEL_BOUNDARY, '$1_$2')
+        .replace(WHITESPACE_HYPHEN, '_')
         .toLowerCase()
-        .replace(/^_+|_+$/g, '');
+        .replace(LEADING_TRAILING_UNDERSCORE, '');
 }
 
 export function toCamelCase(str = '') {
     return str
         .toLowerCase()
-        .split(/[\s-_]+/)
+        .split(WHITESPACE_HYPHEN_UNDERSCORE)
         .map((w, i) => (i === 0 ? w : w.charAt(0).toUpperCase() + w.slice(1)))
         .join('');
 }
@@ -53,7 +61,7 @@ export function toCamelCase(str = '') {
 export function toPascalCase(str = '') {
     return str
         .toLowerCase()
-        .split(/[\s-_]+/)
+        .split(WHITESPACE_HYPHEN_UNDERSCORE)
         .map(w => w.charAt(0).toUpperCase() + w.slice(1))
         .join('');
 }
