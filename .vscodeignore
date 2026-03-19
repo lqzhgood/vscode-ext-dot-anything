@@ -17,3 +17,5 @@ assets/**
 .vscode
 .claude
 .github
+**/Thumbs.db
+doc/**

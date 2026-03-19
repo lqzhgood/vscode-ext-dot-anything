@@ -24,14 +24,26 @@
       / >     🔄 Context switch ×2         / >     ✨ Zero interruption
 ```
 
-Press `.` to transform text into anything, with custom function support.
+Press `.` to transform text into anything. More than template substitution — supports JavaScript functions for programmable snippets.
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Configuration](#configuration) — Rule properties, text mode, function mode
+- [Template Syntax](#template-syntax) — Environment variables, format functions
+- [Advanced Features](#advanced-features) — Cursor placeholders, replace mode, pattern matching, file type filter
+- [Custom Functions](#custom-functions)
+- [Debug & Development](#debug--development)
 
 ## Quick Start
 
 ![start](./public/start.gif)
 
-```json
-{
+<table>
+<tr><th>Description</th><th>Config</th><th>Example</th></tr>
+<tr>
+<td>Insert console.log (with file location)</td>
+<td><pre lang="json">{
     "dot-anything.rules": [
         {
             "trigger": "log",
@@ -39,34 +51,102 @@ Press `.` to transform text into anything, with custom function support.
             "snippet": "console.log('🖨️ #filePath#[#lineNumber#:#column#] #word^toKebabCase#:', #word#);"
         }
     ]
-}
-```
+}</pre></td>
+<td><code>HelloWorld.log</code> →<pre lang="js">console.log('🖨️ /home/demo.js[15:12] hello-world:', HelloWorld);</pre></td>
+</tr>
+</table>
 
-Type `HelloWorld.` → select `log` → get `console.log('🖨️ /home/demo.js[15:12] hello-world:', HelloWorld);`
+**[→ More common configurations](./doc/rules/en.md)**
 
 ## Configuration
 
-Configure `dot-anything.rules` in VS Code settings.
+Configure `dot-anything.rules` in VS Code settings. Each rule has the following properties:
 
-### Rule Properties
+| Property      | Type                       | Required | Default  | Description                                       |
+| ------------- | -------------------------- | -------- | -------- | ------------------------------------------------- |
+| `trigger`     | string                     | Yes      | -        | Trigger keyword                                   |
+| `description` | string                     | No       | -        | Description (supports Markdown)                   |
+| `snippet`     | string \| string[]         | Yes      | -        | Template string or function (supports array form) |
+| `type`        | `text` \| `function`       | No       | `text`   | Rule type                                         |
+| `fileType`    | string[]                   | No       | `["*"]`  | Language identifiers (e.g., `["javascript"]`)     |
+| `replaceMode` | `word` \| `line` \| `file` | No       | `word`   | Replacement scope (word / line / file)            |
+| `pattern`     | string                     | No       | `(\S+)$` | Custom trigger regex (trailing `.` stripped)      |
 
-| Property      | Type                       | Required | Default  | Description                                                                  |
-| ------------- | -------------------------- | -------- | -------- | ---------------------------------------------------------------------------- |
-| `trigger`     | string                     | Yes      | -        | Trigger keyword                                                              |
-| `description` | string                     | No       | -        | Description (supports Markdown)                                              |
-| `snippet`     | string \| string[]         | Yes      | -        | Template string or function (supports multiline array)                       |
-| `type`        | `text` \| `function`       | No       | `text`   | Rule type                                                                    |
-| `fileType`    | string[]                   | No       | `["*"]`  | Language identifiers (e.g., `["javascript"]`)                                |
-| `replaceMode` | `word` \| `line` \| `file` | No       | `word`   | Replacement scope (word / current line / entire file)                        |
-| `pattern`     | string                     | No       | `(\S+)$` | Regex to match text before cursor (trailing dot is stripped before matching) |
+### text Mode (Default)
 
----
+Use `#variable^formatFunction#` placeholder syntax:
 
-## Rule Types
+<table>
+<tr><th>Description</th><th>Config</th><th>Example</th></tr>
+<tr>
+<td>Insert console.log</td>
+<td><pre lang="json">{
+    "trigger": "log",
+    "description": "Insert console.log",
+    "fileType": ["javascript", "typescript"],
+    "snippet": "console.log('#word^toUpperCase#', #word#)"
+}</pre></td>
+<td><code>abc.log</code> → <code>console.log('ABC', abc)</code></td>
+</tr>
+</table>
 
-**Placeholder:** `#variable^formatFunction#`
+### function Mode
 
-**Environment Variables**
+Use JavaScript arrow functions for complex transformations:
+
+| Parameter | Description                                           |
+| --------- | ----------------------------------------------------- |
+| `env`     | Environment object (`env.word`, `env.fileName`, etc.) |
+| `fns`     | Formatting utilities (`fns.toCamelCase`, etc.)        |
+
+<table>
+<tr><th>Description</th><th>Config</th><th>Example</th></tr>
+<tr>
+<td>Insert console.log with file info</td>
+<td><pre lang="json">{
+    "trigger": "log",
+    "description": "Insert console.log with file info",
+    "type": "function",
+    "snippet": "(env, { fns }) => `console.log('[${env.fileName}:${env.lineNumber}] ${fns.toUpperCase(env.word)}:', ${env.word})`"
+}</pre></td>
+<td><code>abc.log</code> →<pre lang="js">console.log('[demo:23] ABC:', abc)</pre></td>
+</tr>
+<tr>
+<td>Generate getter/setter methods<br>(array multiline form)</td>
+<td><pre lang="json">{
+    "trigger": "getter",
+    "description": "Generate getter/setter methods",
+    "type": "function",
+    "snippet": [
+        "(env, { fns }) => `\\",
+        "{",
+        "    _${env.word}: 1,",
+        "    get ${fns.toPascalCase(env.word)}() {",
+        "        return this._${env.word};",
+        "    },",
+        "    set ${fns.toPascalCase(env.word)}(v) {",
+        "        this._${env.word} = v;",
+        "    }",
+        "}`"
+    ]
+}</pre></td>
+<td><code>abc.getter</code> →<pre lang="js">{
+    _abc: 1,
+    get Abc() {
+        return this._abc;
+    },
+    set Abc(v) {
+        this._abc = v;
+    }
+}</pre></td>
+</tr>
+</table>
+
+## Template Syntax
+
+### Environment Variables
+
+Referenced via `#variableName#` in text mode, or `env.variableName` in function mode.
 
 | Variable          | Description                |
 | ----------------- | -------------------------- |
@@ -83,138 +163,51 @@ Configure `dot-anything.rules` in VS Code settings.
 | `lineText`        | Current line text          |
 | `workspaceFolder` | Workspace folder path      |
 
-**Format Functions**
+### (Built-in) Format Functions
 
-| Description                                        | text Mode                 | function Mode          | Example                                                      |
-| -------------------------------------------------- | ------------------------- | ---------------------- | ------------------------------------------------------------ |
-| Keep original value                                | `#word#`                  | `fns.raw`              | `helloWorld` → `helloWorld`                                  |
-| Convert all letters to lowercase                   | `#word^toLowerCase#`      | `fns.toLowerCase`      | `HELLO WORLD` → `hello world`<br>`HELLOWORLD` → `helloworld` |
-| Convert all letters to uppercase                   | `#word^toUpperCase#`      | `fns.toUpperCase`      | `hello world` → `HELLO WORLD`<br>`helloworld` → `HELLOWORLD` |
-| Capitalize first letter only                       | `#word^toUpperCaseFirst#` | `fns.toUpperCaseFirst` | `hello world` → `Hello world`<br>`helloworld` → `Helloworld` |
-| Capitalize first letter, lowercase rest            | `#word^toCapitalize#`     | `fns.toCapitalize`     | `hello World` → `Hello world`<br>`helloWorld` → `Helloworld` |
-| Capitalize first letter of each word               | `#word^toTitleCase#`      | `fns.toTitleCase`      | `hello world` → `Hello World`<br>`helloWorld` → `Helloworld` |
-| Words joined with `-`, all lowercase               | `#word^toKebabCase#`      | `fns.toKebabCase`      | `HelloWorld` → `hello-world`<br>`Helloworld` → `helloworld`  |
-| Words joined with `_`, all lowercase               | `#word^toSnakeCase#`      | `fns.toSnakeCase`      | `HelloWorld` → `hello_world`<br>`Helloworld` → `helloworld`  |
-| First word lowercase, subsequent words capitalized | `#word^toCamelCase#`      | `fns.toCamelCase`      | `hello-world` → `helloWorld`<br>`Helloworld` → `helloworld`  |
-| Each word capitalized, no separator                | `#word^toPascalCase#`     | `fns.toPascalCase`     | `hello-world` → `HelloWorld`<br>`helloworld` → `Helloworld`  |
+Used via `^functionName` suffix in text mode (e.g., `#word^toUpperCase#`), or `fns.functionName()` in function mode.
 
-### text Type (Default)
+| Function           | Description                            | Example                        |
+| ------------------ | -------------------------------------- | ------------------------------ |
+| *(no suffix)*      | Keep original value                    | `helloWorld` → `helloWorld`    |
+| `toLowerCase`      | All lowercase                          | `HELLO` → `hello`             |
+| `toUpperCase`      | All uppercase                          | `hello` → `HELLO`             |
+| `toUpperCaseFirst` | Capitalize first letter only           | `hello world` → `Hello world` |
+| `toCapitalize`     | Capitalize first, lowercase rest       | `hello World` → `Hello world` |
+| `toTitleCase`      | Capitalize first letter of each word   | `hello world` → `Hello World` |
+| `toKebabCase`      | Hyphen-joined, all lowercase           | `HelloWorld` → `hello-world`  |
+| `toSnakeCase`      | Underscore-joined, all lowercase       | `HelloWorld` → `hello_world`  |
+| `toCamelCase`      | camelCase                              | `hello-world` → `helloWorld`  |
+| `toPascalCase`     | PascalCase                             | `hello-world` → `HelloWorld`  |
 
-Use placeholders with optional format suffixes.
+## Advanced Features
 
-**Example:**
+### Cursor Placeholder (Tab Jump)
 
-```
-{
-    "trigger": "log",
-    "description": "Insert console.log",
-    "fileType": ["javascript", "typescript"],
-    "snippet": "console.log('#word^toUpperCase#', #word#)"
-}
+Use `#✏️#` syntax in snippets to define editable positions with Tab navigation and automatic format conversion.
 
-abc.log -> console.log('ABC',abc)
-```
+**Syntax:** `#✏️<index>^<modifier>-<comment>#`
 
----
+| Part         | Required | Description                               |
+| ------------ | -------- | ----------------------------------------- |
+| `<index>`    | Yes      | Tab order (starting from 1)               |
+| `<modifier>` | No       | Format function applied when leaving      |
+| `<comment>`  | No       | Default value / hint text                 |
 
-### function Type
-
-Use JavaScript for complex transformations.
-
-**Parameters:**
-
-| Parameter | Description                                           |
-| --------- | ----------------------------------------------------- |
-| `env`     | Environment object (`env.word`, `env.fileName`, etc.) |
-| `fns`     | Formatting utilities (`fns.toCamelCase`, etc.)        |
-
-**Examples:**
-
-```
-{
-    "trigger": "log",
-    "description": "Insert console.log with file info",
-    "type": "function",
-    "snippet": "(env, { fns }) => `console.log('[${env.fileName}:${env.lineNumber}] ${fns.toUpperCase(env.word)}:', ${env.word})`"
-}
-
-abc.log -> console.log('[demo:23] ABC:', abc)
-```
-
-```
-{
-    "trigger": "getter",
-    "description": "Generate getter/setter methods",
-    "type": "function",
-    "snippet": [
-        "(env, { fns }) => `\\",
-        "{",
-        "    _${env.word}: 1,",
-        "    get ${fns.toPascalCase(env.word)}() {",
-        "        return this._${env.word};",
-        "    },",
-        "    set ${fns.toPascalCase(env.word)}(v) {",
-        "        this._${env.word} = v;",
-        "    }",
-        "}`"
-    ]
-}
-
-
-abc.getter ->  {
-                   _abc: 1,
-                   get Abc() {
-                       return this._abc;
-                   },
-                   set Abc(v) {
-                       this._abc = v;
-                   }
-               }
-
-```
-
----
-
-## Cursor Placeholder (Tab Jump)
-
-Use `#✏️#` syntax in snippets to define editable cursor positions with Tab navigation and automatic format conversion.
-
-### Syntax
-
-```
-#✏️<index>^<modifier>-<comment>#
-```
-
-| Part         | Required | Description                                       |
-| ------------ | -------- | ------------------------------------------------- |
-| `<index>`    | Yes      | Tab order (starting from 1)                       |
-| `<modifier>` | No       | Format function to apply when leaving placeholder |
-| `<comment>`  | No       | Default value/hint text for placeholder           |
-
-### Examples
-
-**Basic Usage:**
-
-```json
-{
+<table>
+<tr><th>Description</th><th>Config</th><th>Example</th></tr>
+<tr>
+<td>Generate const declaration</td>
+<td><pre lang="json">{
     "trigger": "const",
     "description": "Generate const declaration",
     "snippet": "const #✏️1^toUpperCase-name# = #✏️2-value#;"
-}
-```
-
-**Result:**
-
-1. Type `myVar.const` → select rule
-2. Insert `const name^toUpperCase = value;`, cursor selects `name`
-3. Edit to `myvar`
-4. Press Tab to jump to next placeholder
-5. Auto-convert to `const MYVAR = value;` (apply `toUpperCase` and remove `^toUpperCase`)
-
-**Using Custom Functions as Modifiers:**
-
-```json
-{
+}</pre></td>
+<td>Type <code>myVar.const</code><br>→ Insert <code>const name = value;</code><br>→ Edit name to <code>myvar</code><br>→ Press Tab → auto-converts to <code>MYVAR</code></td>
+</tr>
+<tr>
+<td>With custom functions<br>Multiple naming styles</td>
+<td><pre lang="json">{
     "dot-anything.rules": [
         {
             "trigger": "cases",
@@ -228,247 +221,104 @@ Use `#✏️#` syntax in snippets to define editable cursor positions with Tab n
             "fn": "(s = '', { fns }) => `use${fns.toUpperCaseFirst(s)}`"
         }
     ]
-}
-```
+}</pre></td>
+<td>Type <code>demo.cases</code><br>→ Edit to <code>hello world</code><br>→ Press Tab →<pre>kebab: hello-world
+camel: helloWorld
+hook: useHello world</pre></td>
+</tr>
+</table>
 
-**Result:**
+> **Note:** Placeholders with the same index share the same default value (VS Code limitation), but each position can have a different modifier, applied separately when leaving.
 
-1. Type `demo.cases` → select rule
-2. Insert `kebab: name^toKebabCase, camel: name^toCamelCase, hook: name^reactHook`, cursor selects `name`
-3. Edit to `hello world`
-4. Press Tab to jump
-5. Auto-convert to `kebab: hello-world, camel: helloWorld, hook: useHello world` (different modifiers applied to each position)
+### Replace Mode (replaceMode)
 
-### Modifier List
+Control the scope of text replaced when a completion is accepted:
 
-Modifiers support all built-in format functions and custom functions (configured via `dot-anything.fns`).
+| Value  | Replacement Scope | Example (input `abc def.`, result `DEF`) |
+| ------ | ----------------- | ---------------------------------------- |
+| `word` | Nearest word only | `abc DEF`                                |
+| `line` | Entire line       | `DEF`                                    |
+| `file` | Entire file       | Entire file content replaced             |
 
-### Notes
-
-> **Placeholders with the same index share the same default value**
->
-> Due to VS Code native Snippet limitations, multiple placeholders with the same index will use the first defined default value. This is expected behavior, not a bug.
->
-> ```json
-> // Example: Both #✏️1# will display "name"
-> "snippet": "#✏️1-name# and #✏️1-another#"
-> // Result: "name and name"
-> ```
->
-> **But each position can have different modifiers**
->
-> Placeholders with the same index will apply their respective modifiers when leaving, achieving different conversion effects.
->
-> ```json
-> "snippet": "#✏️1^toUpperCase-name# and #✏️1^toLowerCase-name#"
-> // Type "Hello" then press Tab to jump
-> // Result: "HELLO and hello"
-> ```
-
----
-
-## Replace Mode
-
-Control the scope of text replaced when a completion item is accepted via `replaceMode`.
-
-| Value  | Replacement Scope   | Example (input `abc def.`, result `DEF`) |
-| ------ | ------------------- | ---------------------------------------- |
-| `word` | Nearest word only   | `abc DEF`                                |
-| `line` | Entire current line | `DEF` (whole line replaced)              |
-| `file` | Entire file         | Entire file content replaced             |
-
-**Example — comment out the entire line:**
-
-```json
-{
+<table>
+<tr><th>Description</th><th>Config</th><th>Example</th></tr>
+<tr>
+<td>Comment out the entire line</td>
+<td><pre lang="json">{
     "trigger": "//",
     "description": "Comment out the whole line",
     "pattern": "",
     "replaceMode": "line",
     "snippet": "// #lineText#"
-}
-```
+}</pre></td>
+<td>Line <code>abc def</code> →<pre lang="js">// abc def</pre></td>
+</tr>
+</table>
 
-Type `abc def.` → select `//` → entire line becomes `// abc def`
+> The formatted result is unchanged regardless of `replaceMode`. Only the replacement range changes. Default is `word`, fully backwards-compatible.
 
-> **Note:** The formatted result (snippet output) is unchanged regardless of `replaceMode`. Only the replacement range changes. Default is `word`, fully backwards-compatible.
+### Pattern Matching (pattern)
 
----
+By default, rules match non-whitespace text before `.` (`(\S+)$`). Use `pattern` to customize the trigger regex per rule.
 
-## Pattern Matching
+**Empty pattern — trigger without input:** Set `"pattern": ""` to trigger by just typing `.`.
 
-By default, rules trigger when you type `word.` (matching `(\S+)$` on the text before the dot). Use the `pattern` property to customize the trigger regex per rule.
-
-**Trigger without word:**
-
-```json
-{
-    "trigger": "//",
-    "description": "Comment out the whole line",
-    "pattern": "",
-    "replaceMode": "line",
-    "snippet": "// #lineText#"
-}
-```
-
-Just type `.` to trigger — no word needed before the dot.
-
-**Match only digits:**
-
-```json
-{
+<table>
+<tr><th>Description</th><th>Config</th><th>Example</th></tr>
+<tr>
+<td>Convert number to px<br>(digits only)</td>
+<td><pre lang="json">{
     "trigger": "px",
     "description": "Convert number to px",
     "pattern": "(\\d+)$",
     "snippet": "#word#px"
-}
-```
-
-Type `16.` → select `px` → get `16px`. Non-digit input won't trigger this rule.
-
-**Access capture groups via `match`:**
-
-| Syntax             | Description                       | Example (pattern `(hello) (world)`) |
-| ------------------ | --------------------------------- | ----------------------------------- |
-| `#match#`          | All groups joined by comma        | `hello world,hello,world`           |
-| `#match.N#`        | Specific capture group (by index) | `#match.1#` → `hello`               |
-| `#match.N^format#` | Apply format function to group N  | `#match.1^toUpperCase#` → `HELLO`   |
-| `env.match[N]`     | Access in function mode           | `env.match[2]` → `world`            |
-
-```json
-{
+}</pre></td>
+<td><code>16.px</code> → <code>16px</code><br>(non-digits won't trigger)</td>
+</tr>
+<tr>
+<td>Swap two words<br>(capture groups)</td>
+<td><pre lang="json">{
     "trigger": "swap",
     "description": "Swap two words",
     "pattern": "(\\w+)\\s+(\\w+)$",
     "snippet": "#match.2# #match.1#"
-}
-```
+}</pre></td>
+<td><code>hello world.swap</code> → <code>world hello</code></td>
+</tr>
+</table>
 
-Type `hello world.` → select `swap` → get `world hello`
+**Access capture groups via `match`:**
 
----
+| Syntax             | Description                  | Example (pattern `(hello) (world)`) |
+| ------------------ | ---------------------------- | ----------------------------------- |
+| `#match#`          | All groups joined by comma   | `hello world,hello,world`           |
+| `#match.N#`        | Specific capture group       | `#match.1#` → `hello`              |
+| `#match.N^format#` | Capture group + format func  | `#match.1^toUpperCase#` → `HELLO`   |
+| `env.match[N]`     | Access in function mode      | `env.match[2]` → `world`           |
 
-## File Type Filter
+### File Type Filter (fileType)
 
 Limit rules to specific languages:
 
-```json
-{
+<table>
+<tr><th>Description</th><th>Config</th><th>Example</th></tr>
+<tr>
+<td>Insert print (Python only)</td>
+<td><pre lang="json">{
     "trigger": "print",
     "description": "Insert print",
     "fileType": ["python"],
     "snippet": "print('#word#', #word#)"
-}
-```
+}</pre></td>
+<td><code>data.print</code> → <code>print('data', data)</code></td>
+</tr>
+</table>
 
-Common identifiers: `*` (all), `javascript`, `typescript`, `python`, `java`, `go`, `rust`, `html`, `css`, `json`, `markdown`
-
-Full list: [VS Code Language Identifiers](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers)
-
-## Common Configuration
-
-```json
-{
-    "dot-anything.rules": [
-        // text mode
-        {
-            "trigger": "raw",
-            "description": "Keep original value\nExample: helloWorld → helloWorld",
-            "snippet": "#word#"
-        },
-        {
-            "trigger": "toLowerCase",
-            "description": "Convert all letters to lowercase\n`HELLO WORLD → hello world`\n`HELLOWORLD → helloworld`",
-            "snippet": "#word^toLowerCase#"
-        },
-        {
-            "trigger": "toUpperCase",
-            "description": "Convert all letters to uppercase\n`hello world → HELLO WORLD`\n`helloworld → HELLOWORLD`",
-            "snippet": "#word^toUpperCase#"
-        },
-        {
-            "trigger": "toUpperCaseFirst",
-            "description": "Capitalize first letter only\n`hello world → Hello world`\n`helloworld → Helloworld`",
-            "snippet": "#word^toUpperCaseFirst#"
-        },
-        {
-            "trigger": "toCapitalize",
-            "description": "Capitalize first letter, lowercase rest\n`hello World → Hello world`\n`helloWorld → Helloworld`",
-            "snippet": "#word^toCapitalize#"
-        },
-        {
-            "trigger": "toTitleCase",
-            "description": "Capitalize first letter of each word\n`hello world → Hello World`\n`helloWorld → Helloworld`",
-            "snippet": "#word^toTitleCase#"
-        },
-        {
-            "trigger": "toKebabCase",
-            "description": "Words joined with `-`, all lowercase\n`HelloWorld → hello-world`\n`Helloworld → helloworld`",
-            "snippet": "#word^toKebabCase#"
-        },
-        {
-            "trigger": "toSnakeCase",
-            "description": "Words joined with `_`, all lowercase\n`HelloWorld → hello_world`\n`Helloworld → helloworld`",
-            "snippet": "#word^toSnakeCase#"
-        },
-        {
-            "trigger": "toCamelCase",
-            "description": "First word lowercase, subsequent words capitalized\n`hello-world → helloWorld`\n`Helloworld → helloworld`",
-            "snippet": "#word^toCamelCase#"
-        },
-        {
-            "trigger": "toPascalCase",
-            "description": "Each word capitalized, no separator\n`hello-world → HelloWorld`\n`helloworld → Helloworld`",
-            "snippet": "#word^toPascalCase#"
-        },
-        {
-            "trigger": "func",
-            "description": "Generate function template",
-            "snippet": [
-                "function #word#() {",
-                "    // TODO: implement",
-                "    return;",
-                "}"
-            ]
-        },
-        {
-            "trigger": "//",
-            "description": "Comment out the whole line",
-            "pattern": "",
-            "replaceMode": "line",
-            "snippet": "// #lineText#"
-        },
-        // function mode
-        {
-            "trigger": "log",
-            "description": "Insert console.log with file info",
-            "type": "function",
-            "snippet": "(env, { fns }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
-        },
-        {
-            "trigger": "getter",
-            "description": "Generate getter/setter methods",
-            "type": "function",
-            "snippet": [
-                "(env, { fns }) => `\\",
-                "_${env.word}: 1,",
-                "get ${fns.toPascalCase(env.word)}() {",
-                "    return this._${env.word};",
-                "},",
-                "set ${fns.toPascalCase(env.word)}(v) {",
-                "    this._${env.word} = v;",
-                "}`"
-            ]
-        }
-    ]
-}
-```
+Common identifiers: `*` (all), `javascript`, `typescript`, `python`, `java`, `go`, `rust`, `html`, `css`, `json`, `markdown` — [Full list](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers)
 
 ## Custom Functions
 
-Configure custom formatting functions via `dot-anything.fns`, available in both text and function modes.
-
-**Configuration Example:**
+Configure custom formatting functions via `dot-anything.fns`, available in both text and function modes:
 
 ```json
 {
@@ -485,26 +335,20 @@ Configure custom formatting functions via `dot-anything.fns`, available in both 
 }
 ```
 
-### text Mode Usage
-
-```json
-{
-    "dot-anything.rules": [
-        {
-            "trigger": "prefix",
-            "description": "Add prefix",
-            "snippet": "#word^prefix#"
-        }
-    ]
-}
-```
-
-Type `hello.prefix` → get `prefix_hello`
-
-### function Mode Usage
-
-```json
-{
+<table>
+<tr><th>Description</th><th>Config</th><th>Example</th></tr>
+<tr>
+<td>text mode — Add prefix</td>
+<td><pre lang="json">{
+    "trigger": "prefix",
+    "description": "Add prefix",
+    "snippet": "#word^prefix#"
+}</pre></td>
+<td><code>hello.prefix</code> → <code>prefix_hello</code></td>
+</tr>
+<tr>
+<td>function mode — Generate React Hook name</td>
+<td><pre lang="json">{
     "dot-anything.rules": [
         {
             "trigger": "hook",
@@ -519,31 +363,25 @@ Type `hello.prefix` → get `prefix_hello`
             "fn": "(s, { fns }) => `use${fns.toUpperCaseFirst(s)}`"
         }
     ]
-}
-```
-
-Type `state.hook` → get `useState`
-
-**Note:** When calling custom functions in function mode, you must pass through the second parameter `o` (containing `fns`), otherwise the custom function cannot access built-in formatting functions internally.
-
-**Function Parameters:**
+}</pre></td>
+<td><code>state.hook</code> → <code>useState</code></td>
+</tr>
+</table>
 
 | Parameter | Description                                             |
 | --------- | ------------------------------------------------------- |
 | `s`       | Input string                                            |
 | `fns`     | Built-in formatting functions (e.g., `fns.toUpperCase`) |
 
-**Note:** Custom functions override built-in functions with the same name.
+> **Note:** When calling custom functions in function mode, you must pass through the second parameter `o` (containing `fns`), otherwise the custom function cannot access built-in functions internally. Custom functions override built-in functions with the same name.
 
-## Debug Mode
+## Debug & Development
+
+**Debug mode:**
 
 ```json
-{
-    "dot-anything.debug": true
-}
+{ "dot-anything.debug": true }
 ```
-
-## Development
 
 **Requirements:** Node.js 22.x, VS Code 1.103.0+
 

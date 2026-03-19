@@ -46,17 +46,26 @@
 
 ```
 
-按下 `.` 键，将文本转换为任意格式，支持自定义函数转化。
+按下 `.` 键，将文本转换为任意格式。不只是模板替换——支持 JavaScript 函数，实现可编程的代码片段。
 
+## 目录
 
-
+- [快速开始](#快速开始)
+- [规则配置](#规则配置) — 属性一览、text 模式、function 模式
+- [模板语法](#模板语法) — 环境变量、格式函数
+- [进阶功能](#进阶功能) — 光标占位符、替换范围、正则匹配、文件类型过滤
+- [自定义函数](#自定义函数)
+- [调试与开发](#调试与开发)
 
 ## 快速开始
 
 ![start](./public/start.gif)
 
-```json
-{
+<table>
+<tr><th>描述</th><th>配置</th><th>示例</th></tr>
+<tr>
+<td>插入 console.log（含文件位置）</td>
+<td><pre lang="json">{
     "dot-anything.rules": [
         {
             "trigger": "log",
@@ -64,40 +73,104 @@
             "snippet": "console.log('🖨️ #filePath#[#lineNumber#:#column#] #word^toKebabCase#:', #word#);"
         }
     ]
-}
-```
+}</pre></td>
+<td><code>HelloWorld.log</code> →<pre lang="js">console.log('🖨️ /home/demo.js[15:12] hello-world:', HelloWorld);</pre></td>
+</tr>
+</table>
 
-输入 `HelloWorld.` → 选择 `log` → 得到 `console.log('🖨️ /home/demo.js[15:12] hello-world:', HelloWorld);`
+**[→ 更多常用配置](./doc/rules/cn.md)**
 
+## 规则配置
 
-**[常用配置集](./doc/rules/cn.md)**
+在 VS Code 设置中配置 `dot-anything.rules`，每条规则的属性如下：
 
+| 属性          | 类型                       | 必填 | 默认值   | 说明                              |
+| ------------- | -------------------------- | ---- | -------- | --------------------------------- |
+| `trigger`     | string                     | 是   | -        | 触发关键词                        |
+| `description` | string                     | 否   | -        | 描述（支持 Markdown）             |
+| `snippet`     | string \| string[]         | 是   | -        | 模板字符串或函数（支持数组多行）  |
+| `type`        | `text` \| `function`       | 否   | `text`   | 规则类型                          |
+| `fileType`    | string[]                   | 否   | `["*"]`  | 语言标识符（如 `["javascript"]`） |
+| `replaceMode` | `word` \| `line` \| `file` | 否   | `word`   | 替换范围（单词 / 整行 / 整文件）  |
+| `pattern`     | string                     | 否   | `(\S+)$` | 自定义触发正则（末尾 `.` 已去除） |
 
-## 配置
+### text 模式（默认）
 
-在 VS Code 设置中配置 `dot-anything.rules`。
+使用 `#变量^格式函数#` 占位符语法：
 
-### 规则属性
+<table>
+<tr><th>描述</th><th>配置</th><th>示例</th></tr>
+<tr>
+<td>插入 console.log</td>
+<td><pre lang="json">{
+    "trigger": "log",
+    "description": "插入 console.log",
+    "fileType": ["javascript", "typescript"],
+    "snippet": "console.log('#word^toUpperCase#', #word#)"
+}</pre></td>
+<td><code>abc.log</code> → <code>console.log('ABC', abc)</code></td>
+</tr>
+</table>
 
-| 属性          | 类型                       | 必填 | 默认值   | 说明                                          |
-| ------------- | -------------------------- | ---- | -------- | --------------------------------------------- |
-| `trigger`     | string                     | 是   | -        | 触发关键词                                    |
-| `description` | string                     | 否   | -        | 描述（支持 Markdown）                         |
-| `snippet`     | string \| string[]         | 是   | -        | 模板字符串或函数 (支持数组的多行形式)         |
-| `type`        | `text` \| `function`       | 否   | `text`   | 规则类型                                      |
-| `fileType`    | string[]                   | 否   | `["*"]`  | 语言标识符（如 `["javascript"]`）             |
-| `replaceMode` | `word` \| `line` \| `file` | 否   | `word`   | 替换范围（单词 / 当前行 / 整个文件）          |
-| `pattern`     | string                     | 否   | `(\S+)$` | 正则表达式，匹配光标前文本（末尾 `.` 已去除） |
+### function 模式
 
----
+使用 JavaScript 箭头函数进行复杂转换：
 
-## 规则类型
+| 参数  | 说明                                          |
+| ----- | --------------------------------------------- |
+| `env` | 环境变量对象（`env.word`、`env.fileName` 等） |
+| `fns` | 格式化工具（`fns.toCamelCase` 等）            |
 
-**占位符：** `#环境变量^格式函数#`
+<table>
+<tr><th>描述</th><th>配置</th><th>示例</th></tr>
+<tr>
+<td>插入带文件信息的 console.log</td>
+<td><pre lang="json">{
+    "trigger": "log",
+    "description": "插入带文件信息的 console.log",
+    "type": "function",
+    "snippet": "(env, { fns }) => `console.log('[${env.fileName}:${env.lineNumber}] ${fns.toUpperCase(env.word)}:', ${env.word})`"
+}</pre></td>
+<td><code>abc.log</code> →<pre lang="js">console.log('[demo:23] ABC:', abc)</pre></td>
+</tr>
+<tr>
+<td>生成 getter/setter 方法<br>（数组多行写法）</td>
+<td><pre lang="json">{
+    "trigger": "getter",
+    "description": "生成 getter/setter 方法",
+    "type": "function",
+    "snippet": [
+        "(env, { fns }) => `\\",
+        "{",
+        "    _${env.word}: 1,",
+        "    get ${fns.toPascalCase(env.word)}() {",
+        "        return this._${env.word};",
+        "    },",
+        "    set ${fns.toPascalCase(env.word)}(v) {",
+        "        this._${env.word} = v;",
+        "    }",
+        "}`"
+    ]
+}</pre></td>
+<td><code>abc.getter</code> →<pre lang="js">{
+    _abc: 1,
+    get Abc() {
+        return this._abc;
+    },
+    set Abc(v) {
+        this._abc = v;
+    }
+}</pre></td>
+</tr>
+</table>
 
-**环境变量**
+## 模板语法
 
-| 环境变量          | 说明               |
+### 环境变量
+
+text 模式中通过 `#变量名#` 引用，function 模式中通过 `env.变量名` 访问。
+
+| 变量              | 说明               |
 | ----------------- | ------------------ |
 | `word`            | 输入文本（`.` 前） |
 | `match`           | 正则匹配捕获组数组 |
@@ -112,138 +185,51 @@
 | `lineText`        | 当前行文本         |
 | `workspaceFolder` | 工作区路径         |
 
-**格式函数**
+### (内置)格式函数
 
-| 说明                           | text 模式                 | function 模式          | 示例                                                         |
-| ------------------------------ | ------------------------- | ---------------------- | ------------------------------------------------------------ |
-| 保持原样                       | `#word#`                  | `fns.raw`              | `helloWorld` → `helloWorld`                                  |
-| 所有字母转为小写               | `#word^toLowerCase#`      | `fns.toLowerCase`      | `HELLO WORLD` → `hello world`<br>`HELLOWORLD` → `helloworld` |
-| 所有字母转为大写               | `#word^toUpperCase#`      | `fns.toUpperCase`      | `hello world` → `HELLO WORLD`<br>`helloworld` → `HELLOWORLD` |
-| 仅首字母大写，其余不变         | `#word^toUpperCaseFirst#` | `fns.toUpperCaseFirst` | `hello world` → `Hello world`<br>`helloworld` → `Helloworld` |
-| 首字母大写，其余字母小写       | `#word^toCapitalize#`     | `fns.toCapitalize`     | `hello World` → `Hello world`<br>`helloWorld` → `Helloworld` |
-| 每个单词首字母大写             | `#word^toTitleCase#`      | `fns.toTitleCase`      | `hello world` → `Hello World`<br>`helloWorld` → `Helloworld` |
-| 单词间用 `-` 连接，全小写      | `#word^toKebabCase#`      | `fns.toKebabCase`      | `HelloWorld` → `hello-world`<br>`Helloworld` → `helloworld`  |
-| 单词间用 `_` 连接，全小写      | `#word^toSnakeCase#`      | `fns.toSnakeCase`      | `HelloWorld` → `hello_world`<br>`Helloworld` → `helloworld`  |
-| 首单词小写，后续单词首字母大写 | `#word^toCamelCase#`      | `fns.toCamelCase`      | `hello-world` → `helloWorld`<br>`Helloworld` → `helloworld`  |
-| 每个单词首字母大写，无分隔符   | `#word^toPascalCase#`     | `fns.toPascalCase`     | `hello-world` → `HelloWorld`<br>`helloworld` → `Helloworld`  |
+text 模式中通过 `^函数名` 后缀使用（如 `#word^toUpperCase#`），function 模式中通过 `fns.函数名()` 调用。
 
-### text 类型（默认）
+| 函数               | 说明                           | 示例                           |
+| ------------------ | ------------------------------ | ------------------------------ |
+| *(无后缀)*         | 保持原样                       | `helloWorld` → `helloWorld`    |
+| `toLowerCase`      | 全部小写                       | `HELLO` → `hello`             |
+| `toUpperCase`      | 全部大写                       | `hello` → `HELLO`             |
+| `toUpperCaseFirst` | 仅首字母大写，其余不变         | `hello world` → `Hello world` |
+| `toCapitalize`     | 首字母大写，其余小写           | `hello World` → `Hello world` |
+| `toTitleCase`      | 每个单词首字母大写             | `hello world` → `Hello World` |
+| `toKebabCase`      | 短横线连接，全小写             | `HelloWorld` → `hello-world`  |
+| `toSnakeCase`      | 下划线连接，全小写             | `HelloWorld` → `hello_world`  |
+| `toCamelCase`      | 小驼峰                         | `hello-world` → `helloWorld`  |
+| `toPascalCase`     | 大驼峰                         | `hello-world` → `HelloWorld`  |
 
-使用占位符，支持格式后缀。
+## 进阶功能
 
-**示例：**
+### 光标占位符（Tab 跳转）
 
-```
-{
-    "trigger": "log",
-    "description": "插入 console.log",
-    "fileType": ["javascript", "typescript"],
-    "snippet": "console.log('#word^toUpperCase#', #word#)"
-}
+在 snippet 中使用 `#✏️#` 语法定义可编辑位置，支持 Tab 跳转和自动格式转换。
 
-abc.log -> console.log('ABC',abc)
-```
+**语法：** `#✏️<索引>^<修饰符>-<注释>#`
 
----
+| 部分       | 必填 | 说明                       |
+| ---------- | ---- | -------------------------- |
+| `<索引>`   | 是   | Tab 跳转顺序（从 1 开始） |
+| `<修饰符>` | 否   | 离开时应用的格式函数       |
+| `<注释>`   | 否   | 占位符默认值/提示文本      |
 
-### function 类型
-
-使用 JavaScript 进行复杂转换。
-
-**参数：**
-
-| 参数  | 说明                                          |
-| ----- | --------------------------------------------- |
-| `env` | 环境变量对象（`env.word`、`env.fileName` 等） |
-| `fns` | 格式化工具（`fns.toCamelCase` 等）            |
-
-**示例：**
-
-```
-{
-    "trigger": "log",
-    "description": "插入带文件信息的 console.log",
-    "type": "function",
-    "snippet": "(env, { fns }) => `console.log('[${env.fileName}:${env.lineNumber}] ${fns.toUpperCase(env.word)}:', ${env.word})`"
-}
-
-abc.log -> console.log('[demo:23] ABC:', abc)
-```
-
-```
-{
-    "trigger": "getter",
-    "description": "生成 getter setter 方法",
-    "type": "function",
-    "snippet": [
-        "(env, { fns }) => `\\",
-        "{",
-        "    _${env.word}: 1,",
-        "    get ${fns.toPascalCase(env.word)}() {",
-        "        return this._${env.word};",
-        "    },",
-        "    set ${fns.toPascalCase(env.word)}(v) {",
-        "        this._${env.word} = v;",
-        "    }",
-        "}`"
-    ]
-}
-
-
-abc.getter ->  {
-                   _abc: 1,
-                   get Abc() {
-                       return this._abc;
-                   },
-                   set Abc(v) {
-                       this._abc = v;
-                   }
-               }
-
-```
-
----
-
-## 光标占位符（Tab 跳转）
-
-在 snippet 中使用 `#✏️#` 语法定义可编辑的光标位置，支持 Tab 键跳转和自动格式转换。
-
-### 语法
-
-```
-#✏️<索引>^<修饰符>-<注释>#
-```
-
-| 部分       | 必填 | 说明                                           |
-| ---------- | ---- | ---------------------------------------------- |
-| `<索引>`   | 是   | Tab 跳转顺序（从 1 开始）                      |
-| `<修饰符>` | 否   | 离开占位符时应用的格式函数（如 `toUpperCase`） |
-| `<注释>`   | 否   | 占位符默认值/提示文本                          |
-
-### 示例
-
-**基本用法：**
-
-```json
-{
+<table>
+<tr><th>描述</th><th>配置</th><th>示例</th></tr>
+<tr>
+<td>生成 const 声明</td>
+<td><pre lang="json">{
     "trigger": "const",
     "description": "生成 const 声明",
     "snippet": "const #✏️1^toUpperCase-name# = #✏️2-value#;"
-}
-```
-
-**效果：**
-
-1. 输入 `myVar.const` → 选择规则
-2. 插入 `const name^toUpperCase = value;`，光标选中 `name`
-3. 编辑为 `myvar`
-4. 按 Tab 跳转到下一个占位符
-5. 自动转换为 `const MYVAR = value;`（应用 `toUpperCase` 并移除 `^toUpperCase`）
-
-**使用自定义函数作为修饰符：**
-
-```json
-{
+}</pre></td>
+<td>输入 <code>myVar.const</code><br>→ 插入 <code>const name = value;</code><br>→ 编辑 name 为 <code>myvar</code><br>→ 按 Tab → 自动转为 <code>MYVAR</code></td>
+</tr>
+<tr>
+<td>搭配自定义函数<br>展示多种命名风格</td>
+<td><pre lang="json">{
     "dot-anything.rules": [
         {
             "trigger": "cases",
@@ -257,149 +243,104 @@ abc.getter ->  {
             "fn": "(s = '', { fns }) => `use${fns.toUpperCaseFirst(s)}`"
         }
     ]
-}
-```
+}</pre></td>
+<td>输入 <code>demo.cases</code><br>→ 编辑为 <code>hello world</code><br>→ 按 Tab →<pre>kebab: hello-world
+camel: helloWorld
+hook: useHello world</pre></td>
+</tr>
+</table>
 
-**效果：**
+> **注意：** 相同索引的占位符共享同一个默认值（VS Code 原生限制），但各位置可有不同的修饰符，离开时分别应用不同转换。
 
-1. 输入 `demo.cases` → 选择规则
-2. 插入 `kebab: name^toKebabCase, camel: name^toCamelCase, hook: name^reactHook`，光标选中 `name`
-3. 编辑为 `hello world`
-4. 按 Tab 跳转
-5. 自动转换为 `kebab: hello-world, camel: helloWorld, hook: useHello world`（三个位置分别应用不同的修饰符）
+### 替换范围（replaceMode）
 
-### 修饰符列表
+控制补全时替换的文本范围：
 
-修饰符支持所有内置格式函数，也支持自定义函数（通过 `dot-anything.fns` 配置）。
+| 值     | 替换范围     | 示例（输入 `abc def.`，结果为 `DEF`） |
+| ------ | ------------ | ------------------------------------- |
+| `word` | 仅最近的单词 | `abc DEF`                             |
+| `line` | 当前整行     | `DEF`                                 |
+| `file` | 整个文件     | 整个文件内容被替换                    |
 
-### 注意事项
-
-> **相同索引的占位符共享同一个默认值**
->
-> 由于 VS Code 原生 Snippet 的限制，相同索引的多个占位符会使用第一个定义的默认值。这是预期行为，不是 bug。
->
-> ```json
-> // 示例：两个 #✏️1# 都会显示 "name"
-> "snippet": "#✏️1-name# and #✏️1-another#"
-> // 结果: "name and name"
-> ```
->
-> **但每个位置可以有不同的修饰符**
->
-> 相同索引的占位符在离开时会分别应用各自的修饰符，实现不同的转换效果。
->
-> ```json
-> "snippet": "#✏️1^toUpperCase-name# and #✏️1^toLowerCase-name#"
-> // 输入 "Hello" 后按 Tab 跳转
-> // 结果: "HELLO and hello"
-> ```
-
----
-
-## 替换范围（replaceMode）
-
-通过 `replaceMode` 控制补全被接受时替换的文本范围。
-
-| 值     | 替换范围         | 示例（输入 `abc def.`，结果为 `DEF`） |
-| ------ | ---------------- | ------------------------------------- |
-| `word` | 仅替换最近的单词 | `abc DEF`                             |
-| `line` | 替换当前整行     | `DEF`（整行被替换）                   |
-| `file` | 替换整个文件     | 整个文件内容被替换                    |
-
-**示例 — 将整行转为注释：**
-
-```json
-{
+<table>
+<tr><th>描述</th><th>配置</th><th>示例</th></tr>
+<tr>
+<td>将整行转为注释</td>
+<td><pre lang="json">{
     "trigger": "//",
     "description": "将整行转为注释",
     "pattern": "",
     "replaceMode": "line",
     "snippet": "// #lineText#"
-}
-```
+}</pre></td>
+<td>行 <code>abc def</code> →<pre lang="js">// abc def</pre></td>
+</tr>
+</table>
 
-输入 `abc def.` → 选择 `//` → 整行变为 `// abc def`
+> 格式化结果不受 `replaceMode` 影响，仅替换范围不同。默认值 `word` 与旧版完全兼容。
 
-> **注意：** 格式化结果（snippet 输出）不受 `replaceMode` 影响，仅替换范围不同。默认值为 `word`，与旧版行为完全兼容。
+### 正则匹配（pattern）
 
----
+默认匹配 `.` 前的非空文本（`(\S+)$`），可通过 `pattern` 自定义触发正则。
 
-## 正则匹配（pattern）
+**空 pattern — 无需输入即触发：** 设置 `"pattern": ""` 后只需输入 `.` 即可触发。
 
-默认情况下，规则在输入 `word.` 时触发（对 `.` 前的文本匹配 `(\S+)$`）。通过 `pattern` 属性可以为每条规则自定义触发正则。
-
-**无 word 触发：**
-
-```json
-{
-    "trigger": "//",
-    "description": "将整行转为注释",
-    "pattern": "",
-    "replaceMode": "line",
-    "snippet": "// #lineText#"
-}
-```
-
-只需输入 `.` 即可触发，无需在 `.` 前输入任何单词。
-
-**仅匹配数字：**
-
-```json
-{
+<table>
+<tr><th>描述</th><th>配置</th><th>示例</th></tr>
+<tr>
+<td>数字转 px<br>（仅匹配数字）</td>
+<td><pre lang="json">{
     "trigger": "px",
     "description": "数字转 px",
     "pattern": "(\\d+)$",
     "snippet": "#word#px"
-}
-```
-
-输入 `16.` → 选择 `px` → 得到 `16px`。非数字输入不会触发此规则。
-
-**通过 `match` 访问捕获组：**
-
-| 语法               | 说明                     | 示例（pattern `(hello) (world)`） |
-| ------------------ | ------------------------ | --------------------------------- |
-| `#match#`          | 所有匹配组逗号拼接       | `hello world,hello,world`         |
-| `#match.N#`        | 指定捕获组（N 为索引）   | `#match.1#` → `hello`             |
-| `#match.N^format#` | 对指定捕获组应用格式函数 | `#match.1^toUpperCase#` → `HELLO` |
-| `env.match[N]`     | 函数模式中访问           | `env.match[2]` → `world`          |
-
-```json
-{
+}</pre></td>
+<td><code>16.px</code> → <code>16px</code><br>（非数字不会触发）</td>
+</tr>
+<tr>
+<td>交换两个单词<br>（捕获组）</td>
+<td><pre lang="json">{
     "trigger": "swap",
     "description": "交换两个单词",
     "pattern": "(\\w+)\\s+(\\w+)$",
     "snippet": "#match.2# #match.1#"
-}
-```
+}</pre></td>
+<td><code>hello world.swap</code> → <code>world hello</code></td>
+</tr>
+</table>
 
-输入 `hello world.` → 选择 `swap` → 得到 `world hello`
+**通过 `match` 访问捕获组：**
 
----
+| 语法               | 说明                | 示例（pattern `(hello) (world)`） |
+| ------------------ | ------------------- | --------------------------------- |
+| `#match#`          | 所有匹配组逗号拼接  | `hello world,hello,world`         |
+| `#match.N#`        | 第 N 个捕获组       | `#match.1#` → `hello`            |
+| `#match.N^format#` | 捕获组 + 格式函数   | `#match.1^toUpperCase#` → `HELLO` |
+| `env.match[N]`     | function 模式中访问 | `env.match[2]` → `world`         |
 
-## 文件类型过滤
+### 文件类型过滤（fileType）
 
 限制规则只在特定语言生效：
 
-```json
-{
+<table>
+<tr><th>描述</th><th>配置</th><th>示例</th></tr>
+<tr>
+<td>插入 print（仅 Python）</td>
+<td><pre lang="json">{
     "trigger": "print",
     "description": "插入 print",
     "fileType": ["python"],
     "snippet": "print('#word#', #word#)"
-}
-```
+}</pre></td>
+<td><code>data.print</code> → <code>print('data', data)</code></td>
+</tr>
+</table>
 
-常用标识符：`*`（所有）、`javascript`、`typescript`、`python`、`java`、`go`、`rust`、`html`、`css`、`json`、`markdown`
-
-完整列表：[VS Code 语言标识符](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers)
-
+常用标识符：`*`（所有）、`javascript`、`typescript`、`python`、`java`、`go`、`rust`、`html`、`css`、`json`、`markdown` — [完整列表](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers)
 
 ## 自定义函数
 
-通过 `dot-anything.fns` 配置自定义格式化函数，可在 text 和 function 模式中使用。
-
-**配置示例：**
+通过 `dot-anything.fns` 配置自定义格式化函数，可在 text 和 function 模式中使用：
 
 ```json
 {
@@ -416,26 +357,20 @@ abc.getter ->  {
 }
 ```
 
-### text 模式使用
-
-```json
-{
-    "dot-anything.rules": [
-        {
-            "trigger": "prefix",
-            "description": "添加前缀",
-            "snippet": "#word^prefix#"
-        }
-    ]
-}
-```
-
-输入 `hello.prefix` → 得到 `prefix_hello`
-
-### function 模式使用
-
-```json
-{
+<table>
+<tr><th>描述</th><th>配置</th><th>示例</th></tr>
+<tr>
+<td>text 模式 — 添加前缀</td>
+<td><pre lang="json">{
+    "trigger": "prefix",
+    "description": "添加前缀",
+    "snippet": "#word^prefix#"
+}</pre></td>
+<td><code>hello.prefix</code> → <code>prefix_hello</code></td>
+</tr>
+<tr>
+<td>function 模式 — 生成 React Hook 名称</td>
+<td><pre lang="json">{
     "dot-anything.rules": [
         {
             "trigger": "hook",
@@ -450,33 +385,27 @@ abc.getter ->  {
             "fn": "(s, { fns }) => `use${fns.toUpperCaseFirst(s)}`"
         }
     ]
-}
-```
-
-输入 `state.hook` → 得到 `useState`
-
-**注意：** 在 function 模式中调用自定义函数时，需要透传第二个参数 `o`（包含 `fns`），否则自定义函数内部无法访问内置格式化函数。
-
-**函数参数：**
+}</pre></td>
+<td><code>state.hook</code> → <code>useState</code></td>
+</tr>
+</table>
 
 | 参数  | 说明                                   |
 | ----- | -------------------------------------- |
 | `s`   | 输入字符串                             |
 | `fns` | 内置格式化函数（如 `fns.toUpperCase`） |
 
-**注意：** 自定义函数会覆盖同名内置函数。
+> **注意：** function 模式中调用自定义函数时需透传第二个参数 `o`（含 `fns`），否则内部无法访问内置函数。自定义函数会覆盖同名内置函数。
 
-## 调试模式
+## 调试与开发
+
+**调试模式：**
 
 ```json
-{
-    "dot-anything.debug": true
-}
+{ "dot-anything.debug": true }
 ```
 
-## 开发
-
-**环境要求：** Node.js 22.x、VS Code 1.103.0+
+**开发环境：** Node.js 22.x、VS Code 1.103.0+
 
 ```bash
 npm run compile    # 开发构建

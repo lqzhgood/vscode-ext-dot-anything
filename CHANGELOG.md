@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.4.3]
+
+- 重构中英文 README 文档结构：新增目录导航、表格化示例展示、精简格式函数表
+- 新增常用配置集参考文档（`doc/rules/cn.md`、`doc/rules/en.md`）
+- 更新演示 GIF
+
+详见 [doc/plan/1.4.3-文档重构.md](doc/plan/1.4.3-文档重构.md)
+
 ## [1.4.2]
 
 - 修复无效 function 规则未被跳过导致运行时 TypeError 的 bug
