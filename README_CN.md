@@ -6,7 +6,9 @@
 
 [English](README.md)
 
-> **先想到什么，就先输入什么。**
+## 亮点
+
+> **⭐先想到什么，就先输入什么。**
 
 ```text
             ╭─────────────────────╮
@@ -24,7 +26,30 @@
       / >     🔄 上下文切换 ×2              / >     ✨ 思维零打断
 ```
 
+
+> **⭐不只是模板替换，而是可编程的代码片段。**
+
+```text
+            ╭──────────────────────────────╮
+            │ 💭 代码片段加上函数会怎样？   │
+            ╰──────────┬───────────────────╯
+                       ○
+                      ○
+                  {\_/}
+                  ( •.•)
+                  / >
+
+   📦 VS Code Snippets                   🚀 Dot Anything
+      {\_/}                                {\_/}
+      ( -_-)  key → 模板 → code            ( ^.^)  key → fn(env):模板 → code
+      / >     📋 写死的                    / >     🧩 可编程 = ∞
+
+```
+
 按下 `.` 键，将文本转换为任意格式，支持自定义函数转化。
+
+
+
 
 ## 快速开始
 
@@ -43,6 +68,10 @@
 ```
 
 输入 `HelloWorld.` → 选择 `log` → 得到 `console.log('🖨️ /home/demo.js[15:12] hello-world:', HelloWorld);`
+
+
+**[常用配置集](./doc/rules/cn.md)**
+
 
 ## 配置
 
@@ -365,104 +394,6 @@ abc.getter ->  {
 
 完整列表：[VS Code 语言标识符](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers)
 
-## 常用配置
-
-```json
-{
-    "dot-anything.rules": [
-        // text 模式
-        {
-            "trigger": "raw",
-            "description": "保持原样\n示例: helloWorld → helloWorld",
-            "snippet": "#word#"
-        },
-        {
-            "trigger": "toLowerCase",
-            "description": "所有字母转为小写\n`HELLO WORLD → hello world`\n`HELLOWORLD → helloworld`",
-            "snippet": "#word^toLowerCase#"
-        },
-        {
-            "trigger": "toUpperCase",
-            "description": "所有字母转为大写\n`hello world → HELLO WORLD`\n`helloworld → HELLOWORLD`",
-            "snippet": "#word^toUpperCase#"
-        },
-        {
-            "trigger": "toUpperCaseFirst",
-            "description": "仅首字母大写，其余不变\n`hello world → Hello world`\n`helloworld → Helloworld`",
-            "snippet": "#word^toUpperCaseFirst#"
-        },
-        {
-            "trigger": "toCapitalize",
-            "description": "首字母大写，其余字母小写\n`hello World → Hello world`\n`helloWorld → Helloworld`",
-            "snippet": "#word^toCapitalize#"
-        },
-        {
-            "trigger": "toTitleCase",
-            "description": "每个单词首字母大写\n`hello world → Hello World`\n`helloWorld → Helloworld`",
-            "snippet": "#word^toTitleCase#"
-        },
-        {
-            "trigger": "toKebabCase",
-            "description": "单词间用 `-` 连接，全小写\n`HelloWorld → hello-world`\n`Helloworld → helloworld`",
-            "snippet": "#word^toKebabCase#"
-        },
-        {
-            "trigger": "toSnakeCase",
-            "description": "单词间用 `_` 连接，全小写\n`HelloWorld → hello_world`\n`Helloworld → helloworld`",
-            "snippet": "#word^toSnakeCase#"
-        },
-        {
-            "trigger": "toCamelCase",
-            "description": "首单词小写，后续单词首字母大写\n`hello-world → helloWorld`\n`Helloworld → helloworld`",
-            "snippet": "#word^toCamelCase#"
-        },
-        {
-            "trigger": "toPascalCase",
-            "description": "每个单词首字母大写，无分隔符\n`hello-world → HelloWorld`\n`helloworld → Helloworld`",
-            "snippet": "#word^toPascalCase#"
-        },
-        {
-            "trigger": "func",
-            "description": "生成函数模板",
-            "snippet": [
-                "function #word#() {",
-                "    // TODO: implement",
-                "    return;",
-                "}"
-            ]
-        },
-        {
-            "trigger": "//",
-            "description": "将整行转为注释",
-            "pattern": "",
-            "replaceMode": "line",
-            "snippet": "// #lineText#"
-        },
-        // function 模式
-        {
-            "trigger": "log",
-            "description": "插入带文件信息的 console.log",
-            "type": "function",
-            "snippet": "(env, { fns }) => `console.log('[${env.fileName}:${env.lineNumber}] ${env.word}:', ${env.word})`"
-        },
-        {
-            "trigger": "getter",
-            "description": "生成 getter setter 方法",
-            "type": "function",
-            "snippet": [
-                "(env, { fns }) => `\\",
-                "_${env.word}: 1,",
-                "get ${fns.toPascalCase(env.word)}() {",
-                "    return this._${env.word};",
-                "},",
-                "set ${fns.toPascalCase(env.word)}(v) {",
-                "    this._${env.word} = v;",
-                "}`"
-            ]
-        }
-    ]
-}
-```
 
 ## 自定义函数
 
