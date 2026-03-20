@@ -6,7 +6,9 @@
 
 [中文文档](README_CN.md)
 
-> **Type what you think, the moment you think it.**
+## Highlights
+
+> **⭐ Type what you think, the moment you think it.**
 
 ```text
             ╭──────────────────────────╮
@@ -24,7 +26,26 @@
       / >     🔄 Context switch ×2         / >     ✨ Zero interruption
 ```
 
-Press `.` to transform text into anything. More than template substitution — supports JavaScript functions for programmable snippets.
+> **⭐ Not just template substitution — programmable snippets.**
+
+```text
+            ╭───────────────────────────────────────╮
+            │ 💭 What if snippets had functions?    │
+            ╰──────────┬────────────────────────────╯
+                       ○
+                      ○
+                  {\_/}
+                  ( •.•)
+                  / >
+
+   📦 VS Code Snippets                   🚀 Dot Anything
+      {\_/}                                {\_/}
+      ( -_-)  key → template → code        ( ^.^)  key → fn(env):template → code
+      / >     📋 Static                    / >     🧩 Programmable = ∞
+
+```
+
+Press `.` to transform text into anything. Not just template substitution — supports JavaScript functions for programmable snippets.
 
 ## Table of Contents
 
@@ -167,18 +188,18 @@ Referenced via `#variableName#` in text mode, or `env.variableName` in function 
 
 Used via `^functionName` suffix in text mode (e.g., `#word^toUpperCase#`), or `fns.functionName()` in function mode.
 
-| Function           | Description                            | Example                        |
-| ------------------ | -------------------------------------- | ------------------------------ |
-| *(no suffix)*      | Keep original value                    | `helloWorld` → `helloWorld`    |
-| `toLowerCase`      | All lowercase                          | `HELLO` → `hello`             |
-| `toUpperCase`      | All uppercase                          | `hello` → `HELLO`             |
-| `toUpperCaseFirst` | Capitalize first letter only           | `hello world` → `Hello world` |
-| `toCapitalize`     | Capitalize first, lowercase rest       | `hello World` → `Hello world` |
-| `toTitleCase`      | Capitalize first letter of each word   | `hello world` → `Hello World` |
-| `toKebabCase`      | Hyphen-joined, all lowercase           | `HelloWorld` → `hello-world`  |
-| `toSnakeCase`      | Underscore-joined, all lowercase       | `HelloWorld` → `hello_world`  |
-| `toCamelCase`      | camelCase                              | `hello-world` → `helloWorld`  |
-| `toPascalCase`     | PascalCase                             | `hello-world` → `HelloWorld`  |
+| Function           | Description                          | Example                       |
+| ------------------ | ------------------------------------ | ----------------------------- |
+| _(no suffix)_      | Keep original value                  | `helloWorld` → `helloWorld`   |
+| `toLowerCase`      | All lowercase                        | `HELLO` → `hello`             |
+| `toUpperCase`      | All uppercase                        | `hello` → `HELLO`             |
+| `toUpperCaseFirst` | Capitalize first letter only         | `hello world` → `Hello world` |
+| `toCapitalize`     | Capitalize first, lowercase rest     | `hello World` → `Hello world` |
+| `toTitleCase`      | Capitalize first letter of each word | `hello world` → `Hello World` |
+| `toKebabCase`      | Hyphen-joined, all lowercase         | `HelloWorld` → `hello-world`  |
+| `toSnakeCase`      | Underscore-joined, all lowercase     | `HelloWorld` → `hello_world`  |
+| `toCamelCase`      | camelCase                            | `hello-world` → `helloWorld`  |
+| `toPascalCase`     | PascalCase                           | `hello-world` → `HelloWorld`  |
 
 ## Advanced Features
 
@@ -188,11 +209,11 @@ Use `#✏️#` syntax in snippets to define editable positions with Tab navigati
 
 **Syntax:** `#✏️<index>^<modifier>-<comment>#`
 
-| Part         | Required | Description                               |
-| ------------ | -------- | ----------------------------------------- |
-| `<index>`    | Yes      | Tab order (starting from 1)               |
-| `<modifier>` | No       | Format function applied when leaving      |
-| `<comment>`  | No       | Default value / hint text                 |
+| Part         | Required | Description                          |
+| ------------ | -------- | ------------------------------------ |
+| `<index>`    | Yes      | Tab order (starting from 1)          |
+| `<modifier>` | No       | Format function applied when leaving |
+| `<comment>`  | No       | Default value / hint text            |
 
 <table>
 <tr><th>Description</th><th>Config</th><th>Example</th></tr>
@@ -212,7 +233,7 @@ Use `#✏️#` syntax in snippets to define editable positions with Tab navigati
         {
             "trigger": "cases",
             "description": "Show multiple naming styles",
-            "snippet": "kebab: #✏️1^toKebabCase-name#, camel: #✏️1^toCamelCase#, hook: #✏️1^reactHook#"
+            "snippet": "camel: #✏️1^toCamelCase#, hook: #✏️1^reactHook#"
         }
     ],
     "dot-anything.fns": [
@@ -222,7 +243,7 @@ Use `#✏️#` syntax in snippets to define editable positions with Tab navigati
         }
     ]
 }</pre></td>
-<td>Type <code>demo.cases</code><br>→ Edit to <code>hello world</code><br>→ Press Tab →<pre>kebab: hello-world
+<td>Type <code>demo.cases</code><br>→ Edit to <code>hello world</code><br>→ Press Tab →<pre>
 camel: helloWorld
 hook: useHello world</pre></td>
 </tr>
@@ -289,12 +310,12 @@ By default, rules match non-whitespace text before `.` (`(\S+)$`). Use `pattern`
 
 **Access capture groups via `match`:**
 
-| Syntax             | Description                  | Example (pattern `(hello) (world)`) |
-| ------------------ | ---------------------------- | ----------------------------------- |
-| `#match#`          | All groups joined by comma   | `hello world,hello,world`           |
-| `#match.N#`        | Specific capture group       | `#match.1#` → `hello`              |
-| `#match.N^format#` | Capture group + format func  | `#match.1^toUpperCase#` → `HELLO`   |
-| `env.match[N]`     | Access in function mode      | `env.match[2]` → `world`           |
+| Syntax             | Description                 | Example (pattern `(hello) (world)`) |
+| ------------------ | --------------------------- | ----------------------------------- |
+| `#match#`          | All groups joined by comma  | `hello world,hello,world`           |
+| `#match.N#`        | Specific capture group      | `#match.1#` → `hello`               |
+| `#match.N^format#` | Capture group + format func | `#match.1^toUpperCase#` → `HELLO`   |
+| `env.match[N]`     | Access in function mode     | `env.match[2]` → `world`            |
 
 ### File Type Filter (fileType)
 
