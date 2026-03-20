@@ -12,7 +12,7 @@
 
 ```text
             ╭─────────────────────╮
-            │ 💭 想输出变量 name？ │
+            │ 💭 想输出变量 name？   │
             ╰──────────┬──────────╯
                        ○
                       ○
@@ -31,7 +31,7 @@
 
 ```text
             ╭──────────────────────────────╮
-            │ 💭 代码片段加上函数会怎样？   │
+            │ 💭 代码片段加上函数会怎样？       │
             ╰──────────┬───────────────────╯
                        ○
                       ○
@@ -234,7 +234,7 @@ text 模式中通过 `^函数名` 后缀使用（如 `#word^toUpperCase#`），f
         {
             "trigger": "cases",
             "description": "展示多种命名风格",
-            "snippet": "kebab: #✏️1^toKebabCase-name#, camel: #✏️1^toCamelCase#, hook: #✏️1^reactHook#"
+            "snippet": "camel: #✏️1^toCamelCase#, hook: #✏️1^reactHook#"
         }
     ],
     "dot-anything.fns": [
@@ -244,8 +244,7 @@ text 模式中通过 `^函数名` 后缀使用（如 `#word^toUpperCase#`），f
         }
     ]
 }</pre></td>
-<td>输入 <code>demo.cases</code><br>→ 编辑为 <code>hello world</code><br>→ 按 Tab →<pre>kebab: hello-world
-camel: helloWorld
+<td>输入 <code>demo.cases</code><br>→ 编辑为 <code>hello world</code><br>→ 按 Tab →<pre>camel: helloWorld
 hook: useHello world</pre></td>
 </tr>
 </table>
