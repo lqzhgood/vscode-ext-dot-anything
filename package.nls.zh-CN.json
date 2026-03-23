@@ -1,0 +1,16 @@
+{
+    "extension.description": "按下 . 键，将文本转换为任意格式",
+    "config.title": "Dot Anything",
+    "config.debug.description": "启用调试模式",
+    "config.rules.description": "自定义 dot-anything 规则，参见 [文档](https://github.com/lqzhgood/vscode-ext-dot-anything)。<br />⚠️ 配置此项会覆盖默认规则，如需保留请从 [默认规则](https://github.com/lqzhgood/vscode-ext-dot-anything/blob/main/doc/rules/default.md) 中复制。",
+    "config.rules.fileType.description": "语言标识符过滤，参见 https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers",
+    "config.rules.trigger.description": "触发关键词",
+    "config.rules.ruleDescription.description": "描述（支持 Markdown）",
+    "config.rules.type.description": "规则类型。text：用模板替换；function：将 snippet 作为 JavaScript 函数执行",
+    "config.rules.snippet.description": "模板字符串（使用 #word# 作为占位符）或函数字符串",
+    "config.rules.replaceMode.description": "替换范围：'word' 仅替换匹配的文本（默认），'line' 替换整行，'file' 替换整个文件",
+    "config.rules.pattern.description": "匹配光标前文本的正则表达式（匹配前会去掉末尾的点号）。默认：(\\S+)$",
+    "config.fns.description": "自定义函数",
+    "config.fns.name.description": "函数名称",
+    "config.fns.fn.description": "箭头函数字符串，例如 (s='', { fns }) => `use${fns.toUpperCase(s)}`"
+}

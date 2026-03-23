@@ -26,7 +26,6 @@
       / >     🔄 上下文切换 ×2              / >     ✨ 思维零打断
 ```
 
-
 > **⭐不只是模板替换，而是可编程的代码片段。**
 
 ```text
@@ -83,6 +82,8 @@
 ## 规则配置
 
 在 VS Code 设置中配置 `dot-anything.rules`，每条规则的属性如下：
+
+> ⚠️ 配置此项会覆盖默认规则，如需保留请从 [默认规则](./doc/rules/default.md) 中复制。
 
 | 属性          | 类型                       | 必填 | 默认值   | 说明                              |
 | ------------- | -------------------------- | ---- | -------- | --------------------------------- |
@@ -189,18 +190,18 @@ text 模式中通过 `#变量名#` 引用，function 模式中通过 `env.变量
 
 text 模式中通过 `^函数名` 后缀使用（如 `#word^toUpperCase#`），function 模式中通过 `fns.函数名()` 调用。
 
-| 函数               | 说明                           | 示例                           |
-| ------------------ | ------------------------------ | ------------------------------ |
-| *(无后缀)*         | 保持原样                       | `helloWorld` → `helloWorld`    |
-| `toLowerCase`      | 全部小写                       | `HELLO` → `hello`             |
-| `toUpperCase`      | 全部大写                       | `hello` → `HELLO`             |
-| `toUpperCaseFirst` | 仅首字母大写，其余不变         | `hello world` → `Hello world` |
-| `toCapitalize`     | 首字母大写，其余小写           | `hello World` → `Hello world` |
-| `toTitleCase`      | 每个单词首字母大写             | `hello world` → `Hello World` |
-| `toKebabCase`      | 短横线连接，全小写             | `HelloWorld` → `hello-world`  |
-| `toSnakeCase`      | 下划线连接，全小写             | `HelloWorld` → `hello_world`  |
-| `toCamelCase`      | 小驼峰                         | `hello-world` → `helloWorld`  |
-| `toPascalCase`     | 大驼峰                         | `hello-world` → `HelloWorld`  |
+| 函数               | 说明                   | 示例                          |
+| ------------------ | ---------------------- | ----------------------------- |
+| _(无后缀)_         | 保持原样               | `helloWorld` → `helloWorld`   |
+| `toLowerCase`      | 全部小写               | `HELLO` → `hello`             |
+| `toUpperCase`      | 全部大写               | `hello` → `HELLO`             |
+| `toUpperCaseFirst` | 仅首字母大写，其余不变 | `hello world` → `Hello world` |
+| `toCapitalize`     | 首字母大写，其余小写   | `hello World` → `Hello world` |
+| `toTitleCase`      | 每个单词首字母大写     | `hello world` → `Hello World` |
+| `toKebabCase`      | 短横线连接，全小写     | `HelloWorld` → `hello-world`  |
+| `toSnakeCase`      | 下划线连接，全小写     | `HelloWorld` → `hello_world`  |
+| `toCamelCase`      | 小驼峰                 | `hello-world` → `helloWorld`  |
+| `toPascalCase`     | 大驼峰                 | `hello-world` → `HelloWorld`  |
 
 ## 进阶功能
 
@@ -210,11 +211,11 @@ text 模式中通过 `^函数名` 后缀使用（如 `#word^toUpperCase#`），f
 
 **语法：** `#✏️<索引>^<修饰符>-<注释>#`
 
-| 部分       | 必填 | 说明                       |
-| ---------- | ---- | -------------------------- |
+| 部分       | 必填 | 说明                      |
+| ---------- | ---- | ------------------------- |
 | `<索引>`   | 是   | Tab 跳转顺序（从 1 开始） |
-| `<修饰符>` | 否   | 离开时应用的格式函数       |
-| `<注释>`   | 否   | 占位符默认值/提示文本      |
+| `<修饰符>` | 否   | 离开时应用的格式函数      |
+| `<注释>`   | 否   | 占位符默认值/提示文本     |
 
 <table>
 <tr><th>描述</th><th>配置</th><th>示例</th></tr>
@@ -313,9 +314,9 @@ hook: useHello world</pre></td>
 | 语法               | 说明                | 示例（pattern `(hello) (world)`） |
 | ------------------ | ------------------- | --------------------------------- |
 | `#match#`          | 所有匹配组逗号拼接  | `hello world,hello,world`         |
-| `#match.N#`        | 第 N 个捕获组       | `#match.1#` → `hello`            |
+| `#match.N#`        | 第 N 个捕获组       | `#match.1#` → `hello`             |
 | `#match.N^format#` | 捕获组 + 格式函数   | `#match.1^toUpperCase#` → `HELLO` |
-| `env.match[N]`     | function 模式中访问 | `env.match[2]` → `world`         |
+| `env.match[N]`     | function 模式中访问 | `env.match[2]` → `world`          |
 
 ### 文件类型过滤（fileType）
 

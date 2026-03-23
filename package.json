@@ -1,12 +1,12 @@
 {
     "name": "dot-anything",
     "displayName": "Dot Anything",
-    "description": "Press the dot key to transform into anything.",
+    "description": "%extension.description%",
     "publisher": "lqzh",
     "author": {
         "name": "lqzh"
     },
-    "version": "1.4.4",
+    "version": "1.5.0",
     "icon": "public/logo_128.png",
     "galleryBanner": {
         "color": "#0D1117",
@@ -33,6 +33,7 @@
     "sponsor": {
         "url": "https://github.com/sponsors/lqzhgood"
     },
+    "l10n": "./l10n",
     "main": "./dist/extension.js",
     "scripts": {
         "vscode:prepublish": "npm run package",
@@ -74,17 +75,30 @@
     "homepage": "https://github.com/lqzhgood/vscode-ext-dot-anything/blob/main/README.md",
     "contributes": {
         "configuration": {
-            "title": "dot-anything",
+            "title": "%config.title%",
             "properties": {
                 "dot-anything.debug": {
                     "type": "boolean",
-                    "description": "enabled debug",
+                    "description": "%config.debug.description%",
                     "default": false
                 },
                 "dot-anything.rules": {
                     "type": "array",
-                    "description": "Customize dot it rules",
-                    "default": [],
+                    "markdownDescription": "%config.rules.description%",
+                    "default": [
+                        {
+                            "trigger": "log",
+                            "description": "console.log",
+                            "snippet": "console.log('🖨️ #filePath#[#lineNumber#:#column#] #word^toKebabCase#:', #word#);"
+                        },
+                        {
+                            "trigger": "//",
+                            "description": "Single-line comment",
+                            "replaceMode": "line",
+                            "pattern": "",
+                            "snippet": "// #lineText#"
+                        }
+                    ],
                     "items": {
                         "type": "object",
                         "properties": {
@@ -250,17 +264,17 @@
                                         }
                                     }
                                 ],
-                                "description": "support language identifiers, see https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers"
+                                "description": "%config.rules.fileType.description%"
                             },
                             "trigger": {
                                 "type": "string",
                                 "required": true,
-                                "description": "trigger keyword"
+                                "description": "%config.rules.trigger.description%"
                             },
                             "description": {
                                 "type": "string",
                                 "required": true,
-                                "description": "description, support Markdown"
+                                "description": "%config.rules.ruleDescription.description%"
                             },
                             "type": {
                                 "type": "string",
@@ -269,7 +283,7 @@
                                     "text"
                                 ],
                                 "default": "text",
-                                "description": "Rule type. text: replace $input with the word; function: execute the format string as a function"
+                                "description": "%config.rules.type.description%"
                             },
                             "snippet": {
                                 "anyOf": [
@@ -283,7 +297,7 @@
                                         }
                                     }
                                 ],
-                                "description": "snippet string (use #word# as placeholder) or function string"
+                                "description": "%config.rules.snippet.description%"
                             },
                             "replaceMode": {
                                 "type": "string",
@@ -293,29 +307,29 @@
                                     "file"
                                 ],
                                 "default": "word",
-                                "description": "Controls replacement scope: 'word' replaces only the nearest word (default), 'line' replaces the entire current line, 'file' replaces the entire file"
+                                "description": "%config.rules.replaceMode.description%"
                             },
                             "pattern": {
                                 "type": "string",
-                                "description": "Regex to match text before cursor (trailing dot is stripped before matching). Default: (\\S+)$"
+                                "description": "%config.rules.pattern.description%"
                             }
                         }
                     }
                 },
                 "dot-anything.fns": {
                     "type": "array",
-                    "description": "Custom functions for rules",
+                    "description": "%config.fns.description%",
                     "default": [],
                     "items": {
                         "type": "object",
                         "properties": {
                             "name": {
                                 "type": "string",
-                                "description": "Function name"
+                                "description": "%config.fns.name.description%"
                             },
                             "fn": {
                                 "type": "string",
-                                "description": "Arrow function string, e.g. (s='', { fns }) => `use${fns.toUpperCase(s)}`"
+                                "description": "%config.fns.fn.description%"
                             }
                         },
                         "required": [

@@ -11,9 +11,12 @@ import {
     startSnippetSessionFromCommand,
     updatePlaceholderOffsets,
 } from './cursor';
+import { checkFirstInstall } from './welcome';
 
 export function activate(context: vscode.ExtensionContext) {
     LOG.info('[activate] extension activated');
+
+    checkFirstInstall(context);
 
     // 注册命令：补全项被接受后启动 snippet 会话
     context.subscriptions.push(

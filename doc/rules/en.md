@@ -1,3 +1,5 @@
+**English** | [中文](cn.md)
+
 # Common Rule Configurations
 
 > The following are common rule configuration examples that can be copied directly to `dot-anything.rules` and combined as needed.

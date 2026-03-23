@@ -149,7 +149,11 @@ const Delimiter = ',';
 const PLACEHOLDER_PATTERN = /#([^#^]+?)(?:\^([^#]+))?#/g;
 const DOT_INDEX_PATTERN = /^(.+?)\.(\d+)$/;
 
-export function applyFormat(rule: InnerRule, envVars: EnvVars, fns: Record<string, any>): ParsedSnippet {
+export function applyFormat(
+    rule: InnerRule,
+    envVars: EnvVars,
+    fns: Record<string, any>,
+): ParsedSnippet {
     let result: string;
 
     if (rule.type === 'function') {

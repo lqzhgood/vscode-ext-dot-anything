@@ -26,11 +26,7 @@
         {
             "trigger": "if",
             "description": "if statement",
-            "snippet": [
-                "if (#word#) {",
-                "    #✏️1#",
-                "}"
-            ]
+            "snippet": ["if (#word#) {", "    #✏️1#", "}"]
         },
         // 格式化后缀测试
         {
@@ -222,5 +218,6 @@
             "name": "reverse",
             "fn": "(s = '') => s.split('').reverse().join('')"
         }
-    ]
+    ],
+    "dot-anything.debug": true
 }

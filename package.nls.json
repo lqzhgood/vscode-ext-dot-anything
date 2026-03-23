@@ -1,0 +1,16 @@
+{
+    "extension.description": "Press the dot key to transform into anything.",
+    "config.title": "Dot Anything",
+    "config.debug.description": "Enable debug mode",
+    "config.rules.description": "Customize dot-anything rules, See [Rule Documentation](https://github.com/lqzhgood/vscode-ext-dot-anything) ⚠️ Setting this will override the default rules. See [Default Rules](https://github.com/lqzhgood/vscode-ext-dot-anything/blob/main/doc/rules/default.md) to copy them back. ",
+    "config.rules.fileType.description": "Language identifiers filter, see https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers",
+    "config.rules.trigger.description": "Trigger keyword",
+    "config.rules.ruleDescription.description": "Description (supports Markdown)",
+    "config.rules.type.description": "Rule type. text: replace with snippet template; function: execute snippet as a JavaScript function",
+    "config.rules.snippet.description": "Snippet string (use #word# as placeholder) or function string",
+    "config.rules.replaceMode.description": "Replacement scope: 'word' replaces only the matched text (default), 'line' replaces the entire line, 'file' replaces the entire file",
+    "config.rules.pattern.description": "Regex to match text before cursor (trailing dot is stripped before matching). Default: (\\S+)$",
+    "config.fns.description": "Custom functions for rules",
+    "config.fns.name.description": "Function name",
+    "config.fns.fn.description": "Arrow function string, e.g. (s='', { fns }) => `use${fns.toUpperCase(s)}`"
+}

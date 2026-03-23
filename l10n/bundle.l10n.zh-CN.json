@@ -1,0 +1,22 @@
+{
+    "Welcome — Dot Anything": "欢迎 — Dot Anything",
+    "Welcome to Dot Anything": "欢迎使用 Dot Anything",
+    "Press the dot key to transform text into anything.": "按下 . 键，将文本转换为任意格式。",
+    "Getting Started": "快速开始",
+    "After typing a word, press the {0} key to see available transformations.": "输入文字后，按下 {0} 键即可查看可用的转换选项。",
+    "Default Rules": "默认规则",
+    "Rule: {0}": "规则：{0}",
+    "Type {0} to quickly insert a console.log statement with file path, line number, and variable info.": "输入 {0} 快速插入 console.log 语句，包含文件路径、行号和变量信息。",
+    "Default Configuration:": "默认配置：",
+    "Type {0} to comment out the current line.": "输入 {0} 将当前行注释掉。",
+    "More Rules": "更多规则",
+    "Explore more built-in rules and examples in the documentation.": "在文档中探索更多内置规则和示例。",
+    "View Documentation": "查看文档",
+    "Custom Configuration": "自定义配置",
+    "Open VS Code Settings and search for {0} to customize your rules and functions.": "打开 VS Code 设置，搜索 {0} 来自定义规则和函数。",
+    "Open Settings": "打开设置",
+    "Feedback & Support": "反馈与支持",
+    "Found a bug or have a suggestion? We'd love to hear from you!": "发现 Bug 或有建议？欢迎反馈！",
+    "GitHub Repository": "GitHub 仓库",
+    "Report an Issue": "报告问题"
+}

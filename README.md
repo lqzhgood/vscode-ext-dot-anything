@@ -4,7 +4,7 @@
 
 ![logo](./public/logo_128.png)
 
-[中文文档](README_CN.md)
+[中文文档](README.zh-CN.md)
 
 ## Highlights
 
@@ -82,6 +82,8 @@ Press `.` to transform text into anything. Not just template substitution — su
 ## Configuration
 
 Configure `dot-anything.rules` in VS Code settings. Each rule has the following properties:
+
+> ⚠️ Setting this will override the default rules. See [Default Rules](./doc/rules/default.md) to copy them back.
 
 | Property      | Type                       | Required | Default  | Description                                       |
 | ------------- | -------------------------- | -------- | -------- | ------------------------------------------------- |
