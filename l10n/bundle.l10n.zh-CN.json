@@ -7,7 +7,6 @@
     "Default Rules": "默认规则",
     "Rule: {0}": "规则：{0}",
     "Type {0} to quickly insert a console.log statement with file path, line number, and variable info.": "输入 {0} 快速插入 console.log 语句，包含文件路径、行号和变量信息。",
-    "Default Configuration:": "默认配置：",
     "Type {0} to comment out the current line.": "输入 {0} 将当前行注释掉。",
     "More Rules": "更多规则",
     "Explore more built-in rules and examples in the documentation.": "在文档中探索更多内置规则和示例。",

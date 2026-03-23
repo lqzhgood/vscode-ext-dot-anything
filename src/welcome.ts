@@ -70,17 +70,6 @@ function getWebviewContent(
     const logoUri = webview.asWebviewUri(
         vscode.Uri.joinPath(extensionUri, 'public', 'logo_128.png'),
     );
-    const logDemoUri = webview.asWebviewUri(
-        vscode.Uri.joinPath(extensionUri, 'public', 'welcome', 'log-demo.gif'),
-    );
-    const commentDemoUri = webview.asWebviewUri(
-        vscode.Uri.joinPath(
-            extensionUri,
-            'public',
-            'welcome',
-            'comment-demo.gif',
-        ),
-    );
 
     const isChinese = vscode.env.language.startsWith('zh');
     const docPath = isChinese ? 'doc/rules/cn.md' : 'doc/rules/en.md';
@@ -90,35 +79,58 @@ function getWebviewContent(
     const settingsUri =
         'command:workbench.action.openSettings?%5B%22dot-anything%22%5D';
 
-    const logRuleJson = escapeHtml(
-        JSON.stringify(
-            {
+    const t = (message: string, ...args: Array<string | number | boolean>) =>
+        vscode.l10n.t(message, ...args);
+
+    const ruleShowcases = [
+        {
+            desc: t(
+                'Type {0} to quickly insert a console.log statement with file path, line number, and variable info.',
+                '<code>word.log</code>',
+            ),
+            gif: 'log-demo.gif',
+            rule: {
                 trigger: 'log',
                 description: 'console.log',
                 snippet:
                     "console.log('🖨️ #filePath#[#lineNumber#:#column#] #word^toKebabCase#:', #word#);",
             },
-            null,
-            4,
-        ),
-    );
-
-    const commentRuleJson = escapeHtml(
-        JSON.stringify(
-            {
+        },
+        {
+            desc: t(
+                'Type {0} to comment out the current line.',
+                '<code>.//' + '</code>',
+            ),
+            gif: 'comment-demo.gif',
+            rule: {
                 trigger: '//',
                 description: 'Single-line comment',
                 replaceMode: 'line',
                 pattern: '',
                 snippet: '// #lineText#',
             },
-            null,
-            4,
-        ),
-    );
+        },
+    ];
 
-    const t = (message: string, ...args: Array<string | number | boolean>) =>
-        vscode.l10n.t(message, ...args);
+    const rulesHtml = ruleShowcases
+        .map(item => {
+            const gifUri = webview.asWebviewUri(
+                vscode.Uri.joinPath(
+                    extensionUri,
+                    'public',
+                    'welcome',
+                    item.gif,
+                ),
+            );
+            const ruleJson = escapeHtml(JSON.stringify(item.rule, null, 4));
+            return `
+            <h3>${t('Rule: {0}', item.rule.trigger)}</h3>
+            <p>${item.desc}</p>
+            <p class="label">Rule:</p>
+            <pre><code>${ruleJson}</code></pre>
+            <img src="${gifUri}" alt="${item.rule.trigger} demo" class="demo-gif">`;
+        })
+        .join('\n');
 
     return `<!DOCTYPE html>
 <html lang="${vscode.env.language}">
@@ -240,17 +252,7 @@ function getWebviewContent(
         <section>
             <h2>${t('Default Rules')}</h2>
 
-            <h3>${t('Rule: {0}', 'log')}</h3>
-            <p>${t('Type {0} to quickly insert a console.log statement with file path, line number, and variable info.', '<code>word.log</code>')}</p>
-            <p class="label">${t('Default Configuration:')}</p>
-            <pre><code>${logRuleJson}</code></pre>
-            <img src="${logDemoUri}" alt="log demo" class="demo-gif">
-
-            <h3>${t('Rule: {0}', '//')}</h3>
-            <p>${t('Type {0} to comment out the current line.', '<code>.//' + '</code>')}</p>
-            <p class="label">${t('Default Configuration:')}</p>
-            <pre><code>${commentRuleJson}</code></pre>
-            <img src="${commentDemoUri}" alt="// demo" class="demo-gif">
+${rulesHtml}
         </section>
 
         <section>
