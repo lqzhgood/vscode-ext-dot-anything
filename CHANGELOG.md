@@ -49,7 +49,7 @@
 
 - 增加 `replaceMode` 属性，支持控制补全替换范围（`word` / `line` / `file`）
 
-详见 [doc/plan/1.3.0-replace-mode.md](doc/plan/1.3.0-replace-mode.md)
+详见 [doc/plan/1.3.0-替换模式.md](doc/plan/1.3.0-替换模式.md)
 
 ## [1.2.0]
 
